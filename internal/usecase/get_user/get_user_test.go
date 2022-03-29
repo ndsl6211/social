@@ -1,4 +1,4 @@
-package usecase
+package get_user_test
 
 import (
 	"testing"
@@ -7,6 +7,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	"mashu.example/internal/entity"
+	"mashu.example/internal/usecase/get_user"
 	"mashu.example/internal/usecase/repository/mock"
 )
 
@@ -45,14 +46,11 @@ func TestGetUserUseCase(t *testing.T) {
 		},
 	}
 	repo := mock.NewMockUserRepo(mockCtrl)
-	repo.
-		EXPECT().
-		GetUserById(userId.String()).
-		Return(user, nil)
+	repo.EXPECT().GetUserById(userId).Return(user, nil)
 
-	req := NewGetUserUseCaseReq(userId.String())
-	res := NewGetUserUseCaseRes()
-	usecase := NewGetUserUseCase(repo, &req, &res)
+	req := get_user.NewGetUserUseCaseReq(userId.String())
+	res := get_user.NewGetUserUseCaseRes()
+	usecase := get_user.NewGetUserUseCase(repo, &req, &res)
 	usecase.Execute()
 
 	if res.Err != nil {

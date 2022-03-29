@@ -8,6 +8,7 @@ import (
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
+	uuid "github.com/google/uuid"
 	entity "mashu.example/internal/entity"
 )
 
@@ -35,7 +36,7 @@ func (m *MockUserRepo) EXPECT() *MockUserRepoMockRecorder {
 }
 
 // GetUserById mocks base method.
-func (m *MockUserRepo) GetUserById(arg0 string) (*entity.User, error) {
+func (m *MockUserRepo) GetUserById(arg0 uuid.UUID) (*entity.User, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetUserById", arg0)
 	ret0, _ := ret[0].(*entity.User)

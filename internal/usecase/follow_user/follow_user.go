@@ -1,8 +1,9 @@
-package usecase
+package follow_user
 
 import (
 	"github.com/google/uuid"
 	"mashu.example/internal/entity"
+	"mashu.example/internal/usecase"
 	"mashu.example/internal/usecase/repository"
 )
 
@@ -26,8 +27,8 @@ func (uc *FollowUserUseCase) Execute() {
 	followerId := uuid.MustParse(uc.Req.followerId)
 	followeeId := uuid.MustParse(uc.Req.followeeId)
 
-	follower, err := uc.userRepo.GetUserById(followerId.String())
-	followee, err := uc.userRepo.GetUserById(followeeId.String())
+	follower, err := uc.userRepo.GetUserById(followerId)
+	followee, err := uc.userRepo.GetUserById(followeeId)
 	if err != nil {
 		uc.Res.Err = err
 		return
@@ -53,7 +54,7 @@ func NewFollowUserUseCase(
 	userRepo repository.UserRepo,
 	req *FollowUserUseCaseReq,
 	res *FollowUserUseCaseRes,
-) UseCase {
+) usecase.UseCase {
 	return &FollowUserUseCase{userRepo: userRepo, Req: req, Res: res}
 }
 

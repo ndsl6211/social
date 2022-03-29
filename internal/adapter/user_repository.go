@@ -3,6 +3,7 @@ package adapter
 import (
 	"errors"
 
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 	"mashu.example/internal/adapter/datamapper"
 	"mashu.example/internal/entity"
@@ -13,7 +14,7 @@ type userRepo struct {
 	db *gorm.DB
 }
 
-func (ur *userRepo) GetUserById(userId string) (*entity.User, error) {
+func (ur *userRepo) GetUserById(userId uuid.UUID) (*entity.User, error) {
 	// get user
 	userData := &datamapper.UserDataMapper{}
 	if err := ur.db.

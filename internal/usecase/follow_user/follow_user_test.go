@@ -1,4 +1,4 @@
-package usecase_test
+package follow_user_test
 
 import (
 	"testing"
@@ -7,7 +7,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	"mashu.example/internal/entity"
-	"mashu.example/internal/usecase"
+	"mashu.example/internal/usecase/follow_user"
 	"mashu.example/internal/usecase/repository/mock"
 )
 
@@ -35,18 +35,22 @@ func TestFollowPrivateUser(t *testing.T) {
 	)
 
 	repo := mock.NewMockUserRepo(mockCtrl)
-	repo.EXPECT().GetUserById(followerId.String()).Return(follower, nil)
-	repo.EXPECT().GetUserById(followeeId.String()).Return(followee, nil)
-	repo.EXPECT().Save(gomock.AssignableToTypeOf(follower)).Do(
+	repo.EXPECT().GetUserById(followerId).Return(follower, nil)
+	repo.EXPECT().GetUserById(followeeId).Return(followee, nil)
+
+	// should call with follower first
+	repo.EXPECT().Save(gomock.AssignableToTypeOf(&entity.User{})).Do(
 		func(arg *entity.User) { follower = arg },
 	)
-	repo.EXPECT().Save(gomock.AssignableToTypeOf(followee)).Do(
+
+	// and then call with followee
+	repo.EXPECT().Save(gomock.AssignableToTypeOf(&entity.User{})).Do(
 		func(arg *entity.User) { followee = arg },
 	)
 
-	req := usecase.NewFollowUserUseCaseReq(followerId.String(), followeeId.String())
-	res := usecase.NewFollowUserUseCaseRes()
-	uc := usecase.NewFollowUserUseCase(repo, &req, &res)
+	req := follow_user.NewFollowUserUseCaseReq(followerId.String(), followeeId.String())
+	res := follow_user.NewFollowUserUseCaseRes()
+	uc := follow_user.NewFollowUserUseCase(repo, &req, &res)
 
 	uc.Execute()
 
@@ -78,8 +82,8 @@ func TestFollowPublicUser(t *testing.T) {
 	)
 
 	repo := mock.NewMockUserRepo(mockCtrl)
-	repo.EXPECT().GetUserById(followerId.String()).Return(follower, nil)
-	repo.EXPECT().GetUserById(followeeId.String()).Return(followee, nil)
+	repo.EXPECT().GetUserById(followerId).Return(follower, nil)
+	repo.EXPECT().GetUserById(followeeId).Return(followee, nil)
 	repo.EXPECT().Save(gomock.AssignableToTypeOf(follower)).Do(
 		func(arg *entity.User) { follower = arg },
 	)
@@ -87,9 +91,9 @@ func TestFollowPublicUser(t *testing.T) {
 		func(arg *entity.User) { followee = arg },
 	)
 
-	req := usecase.NewFollowUserUseCaseReq(followerId.String(), followeeId.String())
-	res := usecase.NewFollowUserUseCaseRes()
-	uc := usecase.NewFollowUserUseCase(repo, &req, &res)
+	req := follow_user.NewFollowUserUseCaseReq(followerId.String(), followeeId.String())
+	res := follow_user.NewFollowUserUseCaseRes()
+	uc := follow_user.NewFollowUserUseCase(repo, &req, &res)
 
 	uc.Execute()
 

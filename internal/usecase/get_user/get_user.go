@@ -1,7 +1,8 @@
-package usecase
+package get_user
 
 import (
 	"github.com/google/uuid"
+	"mashu.example/internal/usecase"
 	"mashu.example/internal/usecase/repository"
 )
 
@@ -29,7 +30,7 @@ type GetUserUseCase struct {
 func (uc *GetUserUseCase) Execute() {
 	userId := uuid.MustParse(uc.Req.userId)
 
-	user, err := uc.userRepo.GetUserById(userId.String())
+	user, err := uc.userRepo.GetUserById(userId)
 	if err != nil {
 		uc.Res.Err = err
 		return
@@ -47,7 +48,7 @@ func NewGetUserUseCase(
 	userRepo repository.UserRepo,
 	req *GetUserUseCaseReq,
 	res *GetUserUseCaseRes,
-) UseCase {
+) usecase.UseCase {
 	return &GetUserUseCase{userRepo, req, res}
 }
 
