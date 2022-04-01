@@ -27,3 +27,14 @@ func (p PostDataMapper) ToPost() *entity.Post {
 		Public:  p.Public,
 	}
 }
+
+func NewPostDataMapper(post *entity.Post) *PostDataMapper {
+	return &PostDataMapper{
+		ID:      post.ID,
+		Title:   post.Title,
+		Content: post.Content,
+		OwnerId: post.Owner.ID,
+		Owner:   *NewUserDataMapper(post.Owner),
+		Public:  post.Public,
+	}
+}

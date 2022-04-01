@@ -50,6 +50,21 @@ func (mr *MockPostRepoMockRecorder) GetPostById(arg0 interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPostById", reflect.TypeOf((*MockPostRepo)(nil).GetPostById), arg0)
 }
 
+// GetPostByUserId mocks base method.
+func (m *MockPostRepo) GetPostByUserId(arg0 uuid.UUID) ([]*entity.Post, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPostByUserId", arg0)
+	ret0, _ := ret[0].([]*entity.Post)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetPostByUserId indicates an expected call of GetPostByUserId.
+func (mr *MockPostRepoMockRecorder) GetPostByUserId(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPostByUserId", reflect.TypeOf((*MockPostRepo)(nil).GetPostByUserId), arg0)
+}
+
 // Save mocks base method.
 func (m *MockPostRepo) Save(arg0 *entity.Post) error {
 	m.ctrl.T.Helper()

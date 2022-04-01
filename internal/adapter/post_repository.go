@@ -17,19 +17,40 @@ type postRepo struct {
 
 func (pr *postRepo) GetPostById(postId uuid.UUID) (*entity.Post, error) {
 	// get post
-	postData := datamapper.PostDataMapper{}
+	postData := datamapper.PostDataMapper{ID: postId}
 	if err := pr.db.
-		Where("posts.id = ?", postId).
-		Find(postData).Error; err != nil {
-		if !errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, err
-		}
+		Preload("Owner").
+		First(&postData).Error; err != nil {
+		return nil, err
 	}
 
 	return postData.ToPost(), nil
 }
 
+func (pr *postRepo) GetPostByUserId(userId uuid.UUID) ([]*entity.Post, error) {
+	postDataMappers := []*datamapper.PostDataMapper{}
+	if err := pr.db.
+		Where("posts.owner_id = ?", userId).
+		Find(postDataMappers).Error; err != nil {
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, err
+		}
+	}
+
+	posts := []*entity.Post{}
+	for _, post := range postDataMappers {
+		posts = append(posts, post.ToPost())
+	}
+
+	return posts, nil
+}
+
 func (pr *postRepo) Save(post *entity.Post) error {
+	postDataMapper := datamapper.NewPostDataMapper(post)
+	if err := pr.db.Save(postDataMapper).Error; err != nil {
+		return err
+	}
+
 	return nil
 }
 

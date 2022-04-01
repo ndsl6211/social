@@ -19,7 +19,7 @@ func (ur *userRepo) GetUserById(userId uuid.UUID) (*entity.User, error) {
 	userData := &datamapper.UserDataMapper{}
 	if err := ur.db.
 		Where("users.id = ?", userId).
-		First(&userData).Error; err != nil {
+		First(userData).Error; err != nil {
 		return nil, err
 	}
 
