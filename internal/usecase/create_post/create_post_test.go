@@ -44,7 +44,7 @@ func TestCreatePost(t *testing.T) {
 		true,
 	)
 	res := create_post.NewCreatePostUseCaseRes()
-	uc := create_post.NewCreatePostUseCase(userRepo, postRepo, &req, &res)
+	uc := create_post.NewCreatePostUseCase(userRepo, postRepo, req, res)
 
 	uc.Execute()
 

@@ -53,10 +53,10 @@ func NewCreatePostUseCaseReq(
 	content string,
 	ownerId uuid.UUID,
 	public bool,
-) CreatePostUseCaseReq {
-	return CreatePostUseCaseReq{title, content, ownerId, public}
+) *CreatePostUseCaseReq {
+	return &CreatePostUseCaseReq{title, content, ownerId, public}
 }
 
-func NewCreatePostUseCaseRes() CreatePostUseCaseRes {
-	return CreatePostUseCaseRes{}
+func NewCreatePostUseCaseRes() *CreatePostUseCaseRes {
+	return &CreatePostUseCaseRes{}
 }
