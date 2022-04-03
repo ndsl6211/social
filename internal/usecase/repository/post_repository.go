@@ -10,4 +10,5 @@ type PostRepo interface {
 	GetPostById(postId uuid.UUID) (*entity.Post, error)
 	GetPostByUserId(userId uuid.UUID) ([]*entity.Post, error)
 	Save(post *entity.Post) error
+	Delete(postId uuid.UUID) error
 }

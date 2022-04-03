@@ -7,8 +7,8 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	"mashu.example/internal/entity"
-	"mashu.example/internal/usecase/get_user"
 	"mashu.example/internal/usecase/repository/mock"
+	"mashu.example/internal/usecase/user/get_user"
 )
 
 func TestGetUserUseCase(t *testing.T) {

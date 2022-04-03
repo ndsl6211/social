@@ -17,8 +17,7 @@ type EditPostUseCaseReq struct {
 }
 
 type EditPostUseCaseRes struct {
-	Err     error
-	message string
+	Err error
 }
 
 type EditPostUseCase struct {

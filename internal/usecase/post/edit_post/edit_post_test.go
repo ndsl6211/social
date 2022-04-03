@@ -7,7 +7,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	"mashu.example/internal/entity"
-	"mashu.example/internal/usecase/edit_post"
+	"mashu.example/internal/usecase/post/edit_post"
 	"mashu.example/internal/usecase/repository/mock"
 )
 

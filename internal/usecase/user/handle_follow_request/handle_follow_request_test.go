@@ -7,8 +7,8 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	"mashu.example/internal/entity"
-	"mashu.example/internal/usecase/handle_follow_request"
 	"mashu.example/internal/usecase/repository/mock"
+	"mashu.example/internal/usecase/user/handle_follow_request"
 )
 
 func TestAcceptFollowRequest(t *testing.T) {

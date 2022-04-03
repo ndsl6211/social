@@ -5,13 +5,26 @@ import (
 	"mashu.example/internal/entity"
 )
 
+type CommentDataMapper struct {
+	ID      uuid.UUID `gorm:"primaryKey;column:id"`
+	Message string    `gorm:"column:message"`
+	OwnerId uuid.UUID `gorm:"column:owner_id"`
+}
+
+func (CommentDataMapper) TableName() string {
+	return "comments"
+}
+
 type PostDataMapper struct {
 	ID      uuid.UUID `gorm:"primaryKey"`
 	Title   string    `gorm:"column:title"`
 	Content string    `gorm:"column:content"`
+	Public  bool      `gorm:"public"`
+
 	OwnerId uuid.UUID
 	Owner   UserDataMapper `gorm:"foreignKey:OwnerId"`
-	Public  bool           `gorm:"public"`
+
+	Comments []*CommentDataMapper `gorm:"foreignKey:OwnerId"`
 }
 
 func (PostDataMapper) TableName() string {

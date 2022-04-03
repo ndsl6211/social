@@ -7,7 +7,7 @@ import (
 	"gorm.io/gorm"
 	"mashu.example/internal/adapter"
 	"mashu.example/internal/entity"
-	"mashu.example/internal/usecase/follow_user"
+	"mashu.example/internal/usecase/user/follow_user"
 	"mashu.example/pkg"
 )
 

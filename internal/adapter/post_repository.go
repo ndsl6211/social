@@ -54,9 +54,19 @@ func (pr *postRepo) Save(post *entity.Post) error {
 	return nil
 }
 
+func (pr *postRepo) Delete(postId uuid.UUID) error {
+	if err := pr.db.Delete(&entity.Post{ID: postId}).Error; err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func NewPostRepository(db *gorm.DB) repository.PostRepo {
-	err := db.AutoMigrate(&datamapper.PostDataMapper{})
-	if err != nil {
+	if err := db.AutoMigrate(&datamapper.PostDataMapper{}); err != nil {
+		fmt.Println(err.Error())
+	}
+	if err := db.AutoMigrate(&datamapper.CommentDataMapper{}); err != nil {
 		fmt.Println(err.Error())
 	}
 
