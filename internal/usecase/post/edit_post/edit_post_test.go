@@ -7,6 +7,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	"mashu.example/internal/entity"
+	"mashu.example/internal/entity/enums/post_permission"
 	"mashu.example/internal/usecase/post/edit_post"
 	"mashu.example/internal/usecase/repository/mock"
 )
@@ -33,7 +34,7 @@ func TestEditPost(t *testing.T) {
 			Email:       "owner@email.com",
 			Public:      true,
 		},
-		true,
+		post_permission.PUBLIC,
 	)
 
 	var updatedPost *entity.Post
@@ -75,7 +76,7 @@ func TestEditNotMyOwnPost(t *testing.T) {
 			Email:       "owner@email.com",
 			Public:      true,
 		},
-		true,
+		post_permission.PUBLIC,
 	)
 
 	postRepo.EXPECT().GetPostById(postId).Return(post, nil)

@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"mashu.example/internal/entity"
+	"mashu.example/internal/entity/enums/post_permission"
 	"mashu.example/internal/usecase/comment/delete_comment"
 	"mashu.example/internal/usecase/repository/mock"
 )
@@ -30,7 +31,7 @@ func TestDeleteComment(t *testing.T) {
 		"My First Post",
 		"My first content",
 		entity.NewUser(ownerId, "post_owner", "owner display name", "owner@email.com", true),
-		true,
+		post_permission.PUBLIC,
 	)
 	commentId := uuid.New()
 	post.Comments = append(post.Comments, entity.NewComment(commentId, owner, post, "Good!"))
@@ -67,7 +68,7 @@ func TestDeleteNotMyOwnComment(t *testing.T) {
 		"My First Post",
 		"My first content",
 		entity.NewUser(ownerId, "post_owner", "owner display name", "owner@email.com", true),
-		true,
+		post_permission.PUBLIC,
 	)
 	commentId := uuid.New()
 	post.Comments = append(post.Comments, entity.NewComment(commentId, owner, post, "Good!"))

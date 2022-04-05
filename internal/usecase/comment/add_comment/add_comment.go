@@ -1,9 +1,13 @@
 package add_comment
 
 import (
+	"errors"
+	"fmt"
+
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"mashu.example/internal/entity"
+	"mashu.example/internal/entity/enums/post_permission"
 	"mashu.example/internal/usecase"
 	"mashu.example/internal/usecase/repository"
 )
@@ -33,16 +37,40 @@ func (uc *AddCommentUseCase) Execute() {
 		return
 	}
 
-	owner, err := uc.userRepo.GetUserById(uc.req.ownerId)
+	if post.Permission == post_permission.PRIVATE {
+		errMsg := fmt.Sprintf("can not add comment under private post (postId: %s)", uc.req.postId)
+		logrus.Errorf(errMsg)
+		uc.res.Err = errors.New(errMsg)
+		return
+	}
+
+	commentOwner, err := uc.userRepo.GetUserById(uc.req.ownerId)
 	if err != nil {
 		logrus.Errorf("failed to get comment owner (userId: %s)", uc.req.ownerId)
 		uc.res.Err = err
 		return
 	}
 
+	if post.Permission == post_permission.FOLLOWER_ONLY {
+		isFollower := false
+		for _, followerID := range post.Owner.Followers {
+			if followerID == commentOwner.ID {
+				isFollower = true
+				break
+			}
+		}
+
+		if !isFollower {
+			errMsg := "only the follower can comment below the follower-only post"
+			logrus.Errorf(errMsg)
+			uc.res.Err = errors.New(errMsg)
+			return
+		}
+	}
+
 	post.Comments = append(post.Comments, entity.NewComment(
 		uuid.New(),
-		owner,
+		commentOwner,
 		post,
 		uc.req.content,
 	))

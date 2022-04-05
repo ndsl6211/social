@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 	"mashu.example/internal/entity"
+	"mashu.example/internal/entity/enums/post_permission"
 	"mashu.example/internal/usecase/post/delete_post"
 	"mashu.example/internal/usecase/repository/mock"
 )
@@ -35,7 +36,7 @@ func TestDeletePost(t *testing.T) {
 			Email:       "owner@email.com",
 			Public:      true,
 		},
-		true,
+		post_permission.PUBLIC,
 	)
 
 	postRepo.EXPECT().GetPostById(postId).Return(post, nil)
@@ -87,7 +88,7 @@ func TestDeleteNotMyPost(t *testing.T) {
 			Email:       "owner@email.com",
 			Public:      true,
 		},
-		true,
+		post_permission.PUBLIC,
 	)
 
 	postRepo.EXPECT().GetPostById(postId).Return(post, nil)

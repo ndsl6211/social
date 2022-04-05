@@ -9,6 +9,7 @@ import (
 	"gorm.io/gorm"
 	"mashu.example/internal/adapter"
 	"mashu.example/internal/entity"
+	"mashu.example/internal/entity/enums/post_permission"
 	"mashu.example/internal/usecase/repository"
 	"mashu.example/pkg"
 )
@@ -23,7 +24,7 @@ func setup() repository.PostRepo {
 func TestGetPostById(t *testing.T) {
 	postRepo := setup()
 
-	postId := uuid.MustParse("11111111-0000-0000-0000-000000000000")
+	postId := uuid.New()
 	postRepo.Save(&entity.Post{
 		ID:      postId,
 		Title:   "Hi, Golang",
@@ -35,7 +36,7 @@ func TestGetPostById(t *testing.T) {
 			"owner@email.com",
 			false,
 		),
-		Public: true,
+		Permission: post_permission.PUBLIC,
 	})
 
 	resultPost, err := postRepo.GetPostById(postId)
@@ -46,6 +47,7 @@ func TestGetPostById(t *testing.T) {
 	assert.Equal(t, resultPost.ID, postId)
 	assert.Equal(t, resultPost.Title, "Hi, Golang")
 	assert.Equal(t, resultPost.Content, "Hi, Clean Architecture!\nHi, Domain Driven Design!")
+	assert.Equal(t, resultPost.Permission, post_permission.PUBLIC)
 	assert.Equal(t, resultPost.Owner.ID, uuid.MustParse("10101010-0000-0000-0000-000000000000"))
 	assert.Equal(t, resultPost.Owner.UserName, "owner")
 	assert.Equal(t, resultPost.Owner.DisplayName, "owner display name")

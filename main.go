@@ -8,6 +8,7 @@ import (
 	"gorm.io/gorm"
 	"mashu.example/internal/adapter"
 	"mashu.example/internal/entity"
+	"mashu.example/internal/entity/enums/post_permission"
 	"mashu.example/internal/usecase/user/follow_user"
 	"mashu.example/pkg"
 )
@@ -56,7 +57,7 @@ func main() {
 
 	// create post with comment
 	postId := uuid.MustParse("11111111-0000-0000-0000-000000000000")
-	post := entity.NewPost(postId, "My First Post", "My first content", user1, true)
+	post := entity.NewPost(postId, "My First Post", "My first content", user1, post_permission.PUBLIC)
 	post.Comments = append(post.Comments, &entity.Comment{
 		ID:        uuid.New(),
 		Owner:     user1,

@@ -1,13 +1,13 @@
 package add_comment_test
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"mashu.example/internal/entity"
+	"mashu.example/internal/entity/enums/post_permission"
 	"mashu.example/internal/usecase/comment/add_comment"
 	"mashu.example/internal/usecase/repository/mock"
 )
@@ -19,23 +19,23 @@ func setup(t *testing.T) (*mock.MockPostRepo, *mock.MockUserRepo) {
 	return mock.NewMockPostRepo(mockCtrl), mock.NewMockUserRepo(mockCtrl)
 }
 
-func TestAddComment(t *testing.T) {
+func TestAddCommentUnderMyOwnPost(t *testing.T) {
 	postRepo, userRepo := setup(t)
 
 	ownerId := uuid.New()
-	owner := entity.NewUser(ownerId, "owner", "owner display name", "owner@email.com", true)
+	commentOwner := entity.NewUser(ownerId, "comment_owner", "comment owner display name", "comment_owner@email.com", true)
 
 	postId := uuid.New()
 	post := entity.NewPost(
 		postId,
 		"My First Post",
 		"My first content",
-		entity.NewUser(ownerId, "post_owner", "owner display name", "owner@email.com", true),
-		true,
+		commentOwner,
+		post_permission.PUBLIC,
 	)
 
 	postRepo.EXPECT().GetPostById(postId).Return(post, nil)
-	userRepo.EXPECT().GetUserById(ownerId).Return(owner, nil)
+	userRepo.EXPECT().GetUserById(ownerId).Return(commentOwner, nil)
 	postRepo.EXPECT().Save(gomock.AssignableToTypeOf(&entity.Post{})).Do(
 		func(arg *entity.Post) { post = arg },
 	)
@@ -50,10 +50,145 @@ func TestAddComment(t *testing.T) {
 		t.Errorf("failed to execute usecase")
 	}
 
-	fmt.Println(post)
-
 	assert.Nil(t, res.Err)
 	assert.Equal(t, "Good!", post.Comments[0].Content)
 	assert.Equal(t, post.ID, post.Comments[0].Post.ID)
-	assert.Equal(t, owner.ID, post.Comments[0].Owner.ID)
+	assert.Equal(t, commentOwner.ID, post.Comments[0].Owner.ID)
+}
+
+func TestAddMultipleCommentUnderPost(t *testing.T) {
+	postRepo, userRepo := setup(t)
+
+	commentOwner := entity.NewUser(uuid.New(), "comment_owner", "comment owner", "comment_owner@email.com", false)
+	postOwner := entity.NewUser(uuid.New(), "post_owner", "post owner", "post_owner@email.com", true)
+	post := entity.NewPost(uuid.New(), "Learning Domain Driven Design", "...", postOwner, post_permission.PUBLIC)
+
+	// first comment
+	userRepo.EXPECT().GetUserById(commentOwner.ID).Return(commentOwner, nil)
+	postRepo.EXPECT().GetPostById(post.ID).Return(post, nil)
+	postRepo.EXPECT().Save(gomock.AssignableToTypeOf(&entity.Post{})).Do(
+		func(arg *entity.Post) { post = arg },
+	)
+
+	req := add_comment.NewAddCommentUseCaseReq(commentOwner.ID, post.ID, "good article!")
+	res := add_comment.NewAddCommentUseCaseRes()
+	uc := add_comment.NewAddCommentUseCase(userRepo, postRepo, req, res)
+
+	uc.Execute()
+	assert.Nil(t, res.Err)
+	assert.Equal(t, 1, len(post.Comments))
+	assert.Equal(t, "good article!", post.Comments[0].Content)
+	assert.Equal(t, commentOwner.ID, post.Comments[0].Owner.ID)
+
+	// second comment
+	userRepo.EXPECT().GetUserById(postOwner.ID).Return(postOwner, nil)
+	postRepo.EXPECT().GetPostById(post.ID).Return(post, nil)
+	postRepo.EXPECT().Save(gomock.AssignableToTypeOf(&entity.Post{})).Do(
+		func(arg *entity.Post) { post = arg },
+	)
+
+	req = add_comment.NewAddCommentUseCaseReq(postOwner.ID, post.ID, "thanks!")
+	res = add_comment.NewAddCommentUseCaseRes()
+	uc = add_comment.NewAddCommentUseCase(userRepo, postRepo, req, res)
+
+	uc.Execute()
+	assert.Nil(t, res.Err)
+	assert.Equal(t, 2, len(post.Comments))
+	assert.Equal(t, "thanks!", post.Comments[1].Content)
+	assert.Equal(t, postOwner.ID, post.Comments[1].Owner.ID)
+}
+
+func TestAddCommentUnderPublicPost(t *testing.T) {
+	postRepo, userRepo := setup(t)
+
+	commentOwner := entity.NewUser(uuid.New(), "comment_owner", "comment owner", "comment_owner@email.com", false)
+	postOwner := entity.NewUser(uuid.New(), "post_owner", "post owner", "post_owner@email.com", false)
+	post := entity.NewPost(uuid.New(), "Learning Domain Driven Design", "...", postOwner, post_permission.PUBLIC)
+
+	userRepo.EXPECT().GetUserById(commentOwner.ID).Return(commentOwner, nil)
+	postRepo.EXPECT().GetPostById(post.ID).Return(post, nil)
+	postRepo.EXPECT().Save(gomock.AssignableToTypeOf(&entity.Post{})).Do(
+		func(arg *entity.Post) { post = arg },
+	)
+
+	req := add_comment.NewAddCommentUseCaseReq(commentOwner.ID, post.ID, "good article!")
+	res := add_comment.NewAddCommentUseCaseRes()
+	uc := add_comment.NewAddCommentUseCase(userRepo, postRepo, req, res)
+
+	uc.Execute()
+	assert.Nil(t, res.Err)
+	assert.Equal(t, 1, len(post.Comments))
+	assert.Equal(t, "good article!", post.Comments[0].Content)
+	assert.Equal(t, commentOwner.ID, post.Comments[0].Owner.ID)
+}
+
+func TestAddCommentUnderFollowerOnlyPostWithoutFollow(t *testing.T) {
+	postRepo, userRepo := setup(t)
+
+	commentOwner := entity.NewUser(uuid.New(), "comment_owner", "comment owner", "comment_owner@email.com", false)
+	postOwner := entity.NewUser(uuid.New(), "post_owner", "post owner", "post_owner@email.com", false)
+
+	post := entity.NewPost(uuid.New(), "Learning Domain Driven Design", "...", postOwner, post_permission.FOLLOWER_ONLY)
+
+	userRepo.EXPECT().GetUserById(commentOwner.ID).Return(commentOwner, nil)
+	postRepo.EXPECT().GetPostById(post.ID).Return(post, nil)
+
+	req := add_comment.NewAddCommentUseCaseReq(commentOwner.ID, post.ID, "good article!")
+	res := add_comment.NewAddCommentUseCaseRes()
+	uc := add_comment.NewAddCommentUseCase(userRepo, postRepo, req, res)
+
+	uc.Execute()
+	assert.Error(t, res.Err)
+	assert.Equal(t, 0, len(post.Comments))
+}
+
+func TestAddCommentUnderFollowerOnlyPostWithFollow(t *testing.T) {
+	postRepo, userRepo := setup(t)
+
+	commentOwner := entity.NewUser(uuid.New(), "comment_owner", "comment owner", "comment_owner@email.com", false)
+	postOwner := entity.NewUser(uuid.New(), "post_owner", "post owner", "post_owner@email.com", false)
+
+	// comment owner follow post owner
+	postOwner.Followers = append(postOwner.Followers, commentOwner.ID)
+
+	post := entity.NewPost(uuid.New(), "Learning Domain Driven Design", "...", postOwner, post_permission.FOLLOWER_ONLY)
+
+	userRepo.EXPECT().GetUserById(commentOwner.ID).Return(commentOwner, nil)
+	postRepo.EXPECT().GetPostById(post.ID).Return(post, nil)
+	postRepo.EXPECT().Save(gomock.AssignableToTypeOf(&entity.Post{})).Do(
+		func(arg *entity.Post) { post = arg },
+	)
+
+	req := add_comment.NewAddCommentUseCaseReq(commentOwner.ID, post.ID, "good article!")
+	res := add_comment.NewAddCommentUseCaseRes()
+	uc := add_comment.NewAddCommentUseCase(userRepo, postRepo, req, res)
+
+	uc.Execute()
+	assert.Nil(t, res.Err)
+	assert.Equal(t, 1, len(post.Comments))
+	assert.Equal(t, "good article!", post.Comments[0].Content)
+	assert.Equal(t, commentOwner.ID, post.Comments[0].Owner.ID)
+}
+
+func TestAddCommentUnderPrivatePost(t *testing.T) {
+	postRepo, userRepo := setup(t)
+
+	commentOwner := entity.NewUser(uuid.New(), "comment_owner", "comment owner", "comment_owner@email.com", false)
+	postOwner := entity.NewUser(uuid.New(), "post_owner", "post owner", "post_owner@email.com", false)
+
+	// comment owner follow post owner
+	postOwner.Followers = append(postOwner.Followers, commentOwner.ID)
+
+	post := entity.NewPost(uuid.New(), "Learning Domain Driven Design", "...", postOwner, post_permission.PRIVATE)
+
+	userRepo.EXPECT().GetUserById(commentOwner.ID).Return(commentOwner, nil)
+	postRepo.EXPECT().GetPostById(post.ID).Return(post, nil)
+
+	req := add_comment.NewAddCommentUseCaseReq(commentOwner.ID, post.ID, "good article!")
+	res := add_comment.NewAddCommentUseCaseRes()
+	uc := add_comment.NewAddCommentUseCase(userRepo, postRepo, req, res)
+
+	uc.Execute()
+	assert.Error(t, res.Err)
+	assert.Equal(t, 0, len(post.Comments))
 }

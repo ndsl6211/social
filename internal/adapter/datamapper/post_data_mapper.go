@@ -5,6 +5,7 @@ import (
 
 	"github.com/google/uuid"
 	"mashu.example/internal/entity"
+	"mashu.example/internal/entity/enums/post_permission"
 )
 
 type CommentDataMapper struct {
@@ -45,10 +46,10 @@ func NewCommentDataMapper(comment *entity.Comment) *CommentDataMapper {
 }
 
 type PostDataMapper struct {
-	ID      uuid.UUID `gorm:"primaryKey"`
-	Title   string    `gorm:"column:title"`
-	Content string    `gorm:"column:content"`
-	Public  bool      `gorm:"public"`
+	ID         uuid.UUID                      `gorm:"primaryKey"`
+	Title      string                         `gorm:"column:title"`
+	Content    string                         `gorm:"column:content"`
+	Permission post_permission.PostPermission `gorm:"public"`
 
 	OwnerId uuid.UUID
 	Owner   *UserDataMapper `gorm:"foreignKey:OwnerId"`
@@ -62,11 +63,11 @@ func (PostDataMapper) TableName() string {
 
 func (p PostDataMapper) ToPost() *entity.Post {
 	return &entity.Post{
-		ID:      p.ID,
-		Title:   p.Title,
-		Content: p.Content,
-		Owner:   p.Owner.ToUser(),
-		Public:  p.Public,
+		ID:         p.ID,
+		Title:      p.Title,
+		Content:    p.Content,
+		Owner:      p.Owner.ToUser(),
+		Permission: p.Permission,
 	}
 }
 
@@ -77,12 +78,12 @@ func NewPostDataMapper(post *entity.Post) *PostDataMapper {
 	}
 
 	return &PostDataMapper{
-		ID:       post.ID,
-		Title:    post.Title,
-		Content:  post.Content,
-		Public:   post.Public,
-		OwnerId:  post.Owner.ID,
-		Owner:    NewUserDataMapper(post.Owner),
-		Comments: comments,
+		ID:         post.ID,
+		Title:      post.Title,
+		Content:    post.Content,
+		Permission: post.Permission,
+		OwnerId:    post.Owner.ID,
+		Owner:      NewUserDataMapper(post.Owner),
+		Comments:   comments,
 	}
 }
