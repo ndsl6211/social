@@ -6,23 +6,17 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
+	"mashu.example/internal/usecase"
 	"mashu.example/internal/usecase/repository"
+	"mashu.example/internal/usecase/types"
 )
 
 type GetFollowingUseCaseReq struct {
 	userId uuid.UUID
 }
 
-type followingInfo struct {
-	ID          uuid.UUID
-	UserName    string
-	DisplayName string
-	Email       string
-	Public      bool
-}
-
 type GetFollowingUseCaseRes struct {
-	Users []*followingInfo
+	Users []*types.FollowingInfo
 	Err   error
 }
 
@@ -41,7 +35,7 @@ func (uc *GetFollowingUseCase) Execute() {
 		return
 	}
 
-	followingInfos := []*followingInfo{}
+	followingInfos := []*types.FollowingInfo{}
 	for _, followingId := range user.Followings {
 		followingUser, err := uc.userRepo.GetUserById(followingId)
 		if err != nil {
@@ -50,7 +44,7 @@ func (uc *GetFollowingUseCase) Execute() {
 			uc.res.Err = errors.New(errMsg)
 			return
 		}
-		followingInfos = append(followingInfos, &followingInfo{
+		followingInfos = append(followingInfos, &types.FollowingInfo{
 			ID:          followingUser.ID,
 			UserName:    followingUser.UserName,
 			DisplayName: followingUser.DisplayName,
@@ -67,7 +61,7 @@ func NewGetFollowingUseCase(
 	userRepo repository.UserRepo,
 	req *GetFollowingUseCaseReq,
 	res *GetFollowingUseCaseRes,
-) *GetFollowingUseCase {
+) usecase.UseCase {
 	return &GetFollowingUseCase{userRepo, req, res}
 }
 
