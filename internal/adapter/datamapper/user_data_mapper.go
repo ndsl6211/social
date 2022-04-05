@@ -7,7 +7,7 @@ import (
 
 type UserDataMapper struct {
 	ID          uuid.UUID          `gorm:"primaryKey;column:id;type:varchat(36)" json:"id"`
-	UserName    string             `gorm:"column:name" json:"username"`
+	UserName    string             `gorm:"column:name;unique" json:"username"`
 	DisplayName string             `gorm:"column:display_name" json:"displayName"`
 	Email       string             `gorm:"column:email" json:"email"`
 	Public      bool               `gorm:"column:public" json:"public"`

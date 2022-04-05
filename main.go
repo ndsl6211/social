@@ -42,8 +42,13 @@ func main() {
 	// create users
 	user1 := entity.NewUser(uuid.New(), "mashu6211", "Mashu", "mashu@email.com", false)
 	user2 := entity.NewUser(uuid.New(), "moonnight612", "Winnie", "moonnight612@email.com", false)
+	// user3 := entity.NewUser(uuid.New(), "moonnight612", "Winnie", "moonnight612@email.com", false)
 	userRepo.Save(user1)
 	userRepo.Save(user2)
+	// if err := userRepo.Save(user3); err != nil {
+	// 	fmt.Println("ERROR!")
+	// 	return
+	// }
 
 	// have user1 follow user2
 	req := follow_user.NewFollowUserUseCaseReq(user1.ID.String(), user2.ID.String())
