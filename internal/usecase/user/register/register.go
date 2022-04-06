@@ -14,6 +14,7 @@ type RegisterUseCaseReq struct {
 }
 
 type RegisterUseCaseRes struct {
+	Err error
 }
 
 type RegisterUseCase struct {
@@ -32,7 +33,8 @@ func (uc *RegisterUseCase) Execute() {
 	)
 
 	if err := uc.userRepo.Save(user); err != nil {
-
+		uc.res.Err = err
+		return
 	}
 }
 
