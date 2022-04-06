@@ -1,6 +1,7 @@
-package datamapper
+package post_data_mapper
 
 import (
+	"mashu.example/internal/adapter/datamapper/user_data_mapper"
 	"time"
 
 	"github.com/google/uuid"
@@ -12,7 +13,7 @@ type CommentDataMapper struct {
 	ID uuid.UUID `gorm:"primaryKey;column:id"`
 
 	OwnerId uuid.UUID
-	Owner   *UserDataMapper
+	Owner   *user_data_mapper.UserDataMapper
 
 	PostId uuid.UUID
 	Post   *PostDataMapper
@@ -52,7 +53,7 @@ type PostDataMapper struct {
 	Permission post_permission.PostPermission `gorm:"public"`
 
 	OwnerId uuid.UUID
-	Owner   *UserDataMapper `gorm:"foreignKey:OwnerId"`
+	Owner   *user_data_mapper.UserDataMapper `gorm:"foreignKey:OwnerId"`
 
 	Comments []*CommentDataMapper `gorm:"foreignKey:PostId"`
 }
@@ -83,7 +84,7 @@ func NewPostDataMapper(post *entity.Post) *PostDataMapper {
 		Content:    post.Content,
 		Permission: post.Permission,
 		OwnerId:    post.Owner.ID,
-		Owner:      NewUserDataMapper(post.Owner),
+		Owner:      user_data_mapper.NewUserDataMapper(post.Owner),
 		Comments:   comments,
 	}
 }

@@ -1,4 +1,4 @@
-package datamapper
+package user_data_mapper
 
 import (
 	"github.com/google/uuid"

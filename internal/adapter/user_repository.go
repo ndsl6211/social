@@ -2,10 +2,10 @@ package adapter
 
 import (
 	"errors"
+	"mashu.example/internal/adapter/datamapper/user_data_mapper"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
-	"mashu.example/internal/adapter/datamapper"
 	"mashu.example/internal/entity"
 	"mashu.example/internal/usecase/repository"
 )
@@ -16,7 +16,7 @@ type userRepo struct {
 
 func (ur *userRepo) GetUserById(userId uuid.UUID) (*entity.User, error) {
 	// get user
-	userData := &datamapper.UserDataMapper{}
+	userData := &user_data_mapper.UserDataMapper{}
 	if err := ur.db.
 		Where("users.id = ?", userId).
 		First(userData).Error; err != nil {
@@ -39,38 +39,38 @@ func (ur *userRepo) GetUserById(userId uuid.UUID) (*entity.User, error) {
 
 func (ur *userRepo) Save(user *entity.User) error {
 	// save user
-	userDataMapper := datamapper.NewUserDataMapper(user)
+	userDataMapper := user_data_mapper.NewUserDataMapper(user)
 	if err := ur.db.Save(userDataMapper).Error; err != nil {
 		return err
 	}
 
 	// build follow status
-	var followDataMappers []*datamapper.FollowDataMapper
+	var followDataMappers []*user_data_mapper.FollowDataMapper
 
 	// store follow req and mark status as REQUESTED
 	for _, followReq := range user.FollowRequests {
-		followDataMappers = append(followDataMappers, datamapper.NewFollowDataMapper(
+		followDataMappers = append(followDataMappers, user_data_mapper.NewFollowDataMapper(
 			followReq.To,
 			followReq.From,
-			datamapper.REQUESTED,
+			user_data_mapper.REQUESTED,
 		))
 	}
 
 	// store followers and mark status as FOLLOWING
 	for _, follower := range user.Followers {
-		followDataMappers = append(followDataMappers, datamapper.NewFollowDataMapper(
+		followDataMappers = append(followDataMappers, user_data_mapper.NewFollowDataMapper(
 			user.ID,
 			follower,
-			datamapper.FOLLOWING,
+			user_data_mapper.FOLLOWING,
 		))
 	}
 
 	// store followings and mark status as FOLLOWING
 	for _, following := range user.Followings {
-		followDataMappers = append(followDataMappers, datamapper.NewFollowDataMapper(
+		followDataMappers = append(followDataMappers, user_data_mapper.NewFollowDataMapper(
 			following,
 			user.ID,
-			datamapper.FOLLOWING,
+			user_data_mapper.FOLLOWING,
 		))
 	}
 
@@ -82,7 +82,7 @@ func (ur *userRepo) Save(user *entity.User) error {
 }
 
 func NewUserRepository(db *gorm.DB) repository.UserRepo {
-	db.AutoMigrate(&datamapper.UserDataMapper{}, &datamapper.FollowDataMapper{})
+	db.AutoMigrate(&user_data_mapper.UserDataMapper{}, &user_data_mapper.FollowDataMapper{})
 
 	return &userRepo{db}
 }
