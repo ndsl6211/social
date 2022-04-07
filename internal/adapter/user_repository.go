@@ -37,6 +37,28 @@ func (ur *userRepo) GetUserById(userId uuid.UUID) (*entity.User, error) {
 	return user, nil
 }
 
+func (ur *userRepo) GetUserByUserName(username string) (*entity.User, error) {
+	userData := &datamapper.UserDataMapper{}
+	if err := ur.db.
+		Where("user.name = ?", username).
+		First(userData).Error; err != nil {
+		return nil, err
+	}
+
+	// get follow relation
+	if err := ur.db.
+		Joins("JOIN users ON (follows.follower_id = users.id OR follows.user_id = users.id)").
+		Where("users.name = ?", username).
+		First(&userData.Follows).Error; err != nil {
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, err
+		}
+	}
+	user := userData.ToUser()
+
+	return user, nil
+}
+
 func (ur *userRepo) Save(user *entity.User) error {
 	// save user
 	userDataMapper := user_data_mapper.NewUserDataMapper(user)

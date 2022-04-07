@@ -8,5 +8,6 @@ import (
 //go:generate mockgen -destination=./mock/user_mock.go -package=mock . UserRepo
 type UserRepo interface {
 	GetUserById(userId uuid.UUID) (*entity.User, error)
+	GetUserByUserName(username string) (*entity.User, error)
 	Save(user *entity.User) error
 }

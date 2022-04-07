@@ -50,6 +50,21 @@ func (mr *MockUserRepoMockRecorder) GetUserById(arg0 interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserById", reflect.TypeOf((*MockUserRepo)(nil).GetUserById), arg0)
 }
 
+// GetUserByUserName mocks base method.
+func (m *MockUserRepo) GetUserByUserName(arg0 string) (*entity.User, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUserByUserName", arg0)
+	ret0, _ := ret[0].(*entity.User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUserByUserName indicates an expected call of GetUserByUserName.
+func (mr *MockUserRepoMockRecorder) GetUserByUserName(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserByUserName", reflect.TypeOf((*MockUserRepo)(nil).GetUserByUserName), arg0)
+}
+
 // Save mocks base method.
 func (m *MockUserRepo) Save(arg0 *entity.User) error {
 	m.ctrl.T.Helper()
