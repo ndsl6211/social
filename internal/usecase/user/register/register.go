@@ -1,7 +1,11 @@
 package register
 
 import (
+	"errors"
+	"fmt"
+
 	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 	"mashu.example/internal/entity"
 	"mashu.example/internal/usecase"
 	"mashu.example/internal/usecase/repository"
@@ -33,7 +37,9 @@ func (uc *RegisterUseCase) Execute() {
 	)
 
 	if err := uc.userRepo.Save(user); err != nil {
-		uc.res.Err = err
+		errMsg := fmt.Sprintf("user %s already exist", uc.req.username)
+		logrus.Info(errMsg)
+		uc.res.Err = errors.New(errMsg)
 		return
 	}
 }
@@ -46,8 +52,12 @@ func NewRegisterUseCase(
 	return &RegisterUseCase{userRepo, req, res}
 }
 
-func NewRegisterUseCaseReq() *RegisterUseCaseReq {
-	return &RegisterUseCaseReq{}
+func NewRegisterUseCaseReq(
+	username string,
+	displayName string,
+	email string,
+) *RegisterUseCaseReq {
+	return &RegisterUseCaseReq{username, displayName, email}
 }
 
 func NewRegisterUseCaseRes() *RegisterUseCaseRes {
