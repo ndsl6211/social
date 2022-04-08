@@ -22,13 +22,13 @@ func NewGroup(
 	id uuid.UUID,
 	name string,
 	owner *User,
-	permisson group_permission.GroupPermission,
+	permission group_permission.GroupPermission,
 ) *Group {
 	return &Group{
 		ID:         id,
 		Name:       name,
 		Owner:      owner,
-		Permission: permisson,
+		Permission: permission,
 		CreatedAt:  time.Now(),
 	}
 }
