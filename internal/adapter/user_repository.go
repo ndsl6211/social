@@ -38,7 +38,7 @@ func (ur *userRepo) GetUserById(userId uuid.UUID) (*entity.User, error) {
 }
 
 func (ur *userRepo) GetUserByUserName(username string) (*entity.User, error) {
-	userData := &datamapper.UserDataMapper{}
+	userData := user_data_mapper.UserDataMapper{}
 	if err := ur.db.
 		Where("user.name = ?", username).
 		First(userData).Error; err != nil {
