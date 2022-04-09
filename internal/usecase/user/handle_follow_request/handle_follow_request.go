@@ -18,8 +18,8 @@ const (
 )
 
 type HandleFollowRequestUsecaseReq struct {
-	userId     string
-	followerId string
+	userId     uuid.UUID
+	followerId uuid.UUID
 	action     HandleFollowRequestAction
 }
 
@@ -34,15 +34,12 @@ type HandleFollowRequestUsecase struct {
 }
 
 func (uc *HandleFollowRequestUsecase) Execute() {
-	userId := uuid.MustParse(uc.Req.userId)
-	followerId := uuid.MustParse(uc.Req.followerId)
-
-	user, err := uc.userRepo.GetUserById(userId)
+	user, err := uc.userRepo.GetUserById(uc.Req.userId)
 	if err != nil {
 		uc.Res.Err = err
 		return
 	}
-	follower, err := uc.userRepo.GetUserById(followerId)
+	follower, err := uc.userRepo.GetUserById(uc.Req.followerId)
 	if err != nil {
 		uc.Res.Err = err
 		return
@@ -51,7 +48,7 @@ func (uc *HandleFollowRequestUsecase) Execute() {
 	var targetFollowReqIdx int
 	var targetFollowReq *entity.FollowRequest = nil
 	for idx, followReq := range user.FollowRequests {
-		if followReq.From == followerId && followReq.To == userId {
+		if followReq.From == uc.Req.followerId && followReq.To == uc.Req.userId {
 			targetFollowReq = followReq
 			targetFollowReqIdx = idx
 			break
@@ -65,7 +62,7 @@ func (uc *HandleFollowRequestUsecase) Execute() {
 
 	targetFollowReq = nil
 	for idx, followReq := range follower.FollowRequests {
-		if followReq.From == followerId && followReq.To == userId {
+		if followReq.From == uc.Req.followerId && followReq.To == uc.Req.userId {
 			targetFollowReq = followReq
 			targetFollowReqIdx = idx
 			break
@@ -78,8 +75,8 @@ func (uc *HandleFollowRequestUsecase) Execute() {
 	follower.FollowRequests = slices.Delete(follower.FollowRequests, targetFollowReqIdx, targetFollowReqIdx+1)
 
 	if uc.Req.action == ACCEPT_FOLLOW_REQUEST {
-		user.AddFollower(followerId)
-		follower.AddFollowing(userId)
+		user.AddFollower(uc.Req.followerId)
+		follower.AddFollowing(uc.Req.userId)
 	}
 
 	uc.userRepo.Save(user)
@@ -97,8 +94,8 @@ func NewHandleFollowRequestUsecase(
 }
 
 func NewHandleFollowRequestUsecaseReq(
-	userId string,
-	followerId string,
+	userId uuid.UUID,
+	followerId uuid.UUID,
 	action HandleFollowRequestAction,
 ) HandleFollowRequestUsecaseReq {
 	return HandleFollowRequestUsecaseReq{userId, followerId, action}

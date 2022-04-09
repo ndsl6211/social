@@ -8,8 +8,8 @@ import (
 )
 
 type FollowUserUseCaseReq struct {
-	followerId string
-	followeeId string
+	followerId uuid.UUID
+	followeeId uuid.UUID
 }
 
 type FollowUserUseCaseRes struct {
@@ -24,21 +24,18 @@ type FollowUserUseCase struct {
 }
 
 func (uc *FollowUserUseCase) Execute() {
-	followerId := uuid.MustParse(uc.Req.followerId)
-	followeeId := uuid.MustParse(uc.Req.followeeId)
-
-	follower, err := uc.userRepo.GetUserById(followerId)
-	followee, err := uc.userRepo.GetUserById(followeeId)
+	follower, err := uc.userRepo.GetUserById(uc.Req.followerId)
+	followee, err := uc.userRepo.GetUserById(uc.Req.followeeId)
 	if err != nil {
 		uc.Res.Err = err
 		return
 	}
 
 	if followee.Public {
-		followee.AddFollower(followerId)
-		follower.AddFollowing(followeeId)
+		followee.AddFollower(uc.Req.followerId)
+		follower.AddFollowing(uc.Req.followeeId)
 	} else {
-		followReq := &entity.FollowRequest{From: followerId, To: followeeId}
+		followReq := &entity.FollowRequest{From: uc.Req.followerId, To: uc.Req.followeeId}
 		follower.AddFollowRequest(followReq)
 		followee.AddFollowRequest(followReq)
 	}
@@ -58,7 +55,7 @@ func NewFollowUserUseCase(
 	return &FollowUserUseCase{userRepo: userRepo, Req: req, Res: res}
 }
 
-func NewFollowUserUseCaseReq(from, to string) FollowUserUseCaseReq {
+func NewFollowUserUseCaseReq(from, to uuid.UUID) FollowUserUseCaseReq {
 	return FollowUserUseCaseReq{from, to}
 }
 

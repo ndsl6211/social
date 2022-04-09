@@ -9,9 +9,9 @@ import (
 )
 
 type CreateGroupUseCaseReq struct {
-	Name       string
-	OwnerId    uuid.UUID
-	Permission group_permission.GroupPermission
+	name       string
+	ownerId    uuid.UUID
+	permission group_permission.GroupPermission
 }
 
 type CreateGroupUseCaseRes struct {
@@ -27,13 +27,13 @@ type CreateGroupUseCase struct {
 }
 
 func (gc *CreateGroupUseCase) Execute() {
-	owner, err := gc.userRepo.GetUserById(gc.req.OwnerId)
+	owner, err := gc.userRepo.GetUserById(gc.req.ownerId)
 	if err != nil {
 		gc.res.Err = err
 		return
 	}
 
-	group := entity.NewGroup(uuid.New(), gc.req.Name, owner, gc.req.Permission)
+	group := entity.NewGroup(uuid.New(), gc.req.name, owner, gc.req.permission)
 	gc.groupRepo.Save(group)
 
 	gc.res.Err = nil
