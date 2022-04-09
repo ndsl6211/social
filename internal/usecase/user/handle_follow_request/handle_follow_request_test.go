@@ -65,8 +65,8 @@ func TestAcceptFollowRequest(t *testing.T) {
 	)
 
 	req := handle_follow_request.NewHandleFollowRequestUsecaseReq(
-		followeeId.String(),
-		followerId.String(),
+		followeeId,
+		followerId,
 		handle_follow_request.ACCEPT_FOLLOW_REQUEST,
 	)
 	res := handle_follow_request.NewHandleFollowRequestUsecaseRes()
@@ -139,8 +139,8 @@ func TestRejectFollowRequest(t *testing.T) {
 	)
 
 	req := handle_follow_request.NewHandleFollowRequestUsecaseReq(
-		followeeId.String(),
-		followerId.String(),
+		followeeId,
+		followerId,
 		handle_follow_request.REJECT_FOLLOW_REQUEST,
 	)
 	res := handle_follow_request.NewHandleFollowRequestUsecaseRes()
