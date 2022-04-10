@@ -39,7 +39,7 @@ func (gc *JoinGroupUseCase) Execute() {
 		joinReq := &entity.JoinRequest{Group: group.ID, User: user.ID}
 		group.AddJoinRequests(joinReq)
 	} else {
-
+		return
 	}
 
 	gc.groupRepo.Save(group)

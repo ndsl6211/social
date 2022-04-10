@@ -11,7 +11,6 @@ import (
 type JoinRequest struct {
 	User  uuid.UUID
 	Group uuid.UUID
-	Admin uuid.UUID
 }
 
 type Group struct {

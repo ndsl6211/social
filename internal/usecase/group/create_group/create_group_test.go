@@ -92,7 +92,7 @@ func TestCreateUnpublicGroup(t *testing.T) {
 func TestCreatePrivateGroup(t *testing.T) {
 	groupRepo, userRepo := setup(t)
 
-	ownerId := uuid.MustParse("00000000-0000-0000-0000-00000000003")
+	ownerId := uuid.MustParse("00000000-0000-0000-0000-000000000003")
 	owner := entity.NewUser(
 		ownerId,
 		"owner",
@@ -109,7 +109,7 @@ func TestCreatePrivateGroup(t *testing.T) {
 	req := create_group.NewCreateGroupUseCaseReq(
 		"Third Group",
 		ownerId,
-		group_permission.PUBLIC,
+		group_permission.PRIVATE,
 	)
 	res := create_group.NewCreateGroupUseCaseRes()
 	gc := create_group.NewCreateGroupUseCase(groupRepo, userRepo, req, res)
