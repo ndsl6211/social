@@ -7,7 +7,7 @@ import (
 )
 
 type GetUserUseCaseReq struct {
-	userId string
+	userId uuid.UUID
 }
 
 type GetUserUseCaseRes struct {
@@ -28,9 +28,7 @@ type GetUserUseCase struct {
 }
 
 func (uc *GetUserUseCase) Execute() {
-	userId := uuid.MustParse(uc.Req.userId)
-
-	user, err := uc.userRepo.GetUserById(userId)
+	user, err := uc.userRepo.GetUserById(uc.Req.userId)
 	if err != nil {
 		uc.Res.Err = err
 		return
@@ -52,7 +50,7 @@ func NewGetUserUseCase(
 	return &GetUserUseCase{userRepo, req, res}
 }
 
-func NewGetUserUseCaseReq(userId string) GetUserUseCaseReq {
+func NewGetUserUseCaseReq(userId uuid.UUID) GetUserUseCaseReq {
 	return GetUserUseCaseReq{userId}
 }
 

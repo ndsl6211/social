@@ -1,0 +1,64 @@
+package join_group
+
+import (
+	"github.com/google/uuid"
+	"mashu.example/internal/entity"
+	"mashu.example/internal/entity/enums/group_permission"
+	"mashu.example/internal/usecase"
+	"mashu.example/internal/usecase/repository"
+)
+
+type JoinGroupUseCaseReq struct {
+	userId  uuid.UUID
+	groupId uuid.UUID
+}
+
+type JoinGroupUseCaseRes struct {
+	Err error
+}
+
+type JoinGroupUseCase struct {
+	userRepo  repository.UserRepo
+	groupRepo repository.GroupRepo
+
+	Req *JoinGroupUseCaseReq
+	Res *JoinGroupUseCaseRes
+}
+
+func (gc *JoinGroupUseCase) Execute() {
+	user, err := gc.userRepo.GetUserById(gc.Req.userId)
+	group, err := gc.groupRepo.GetGroupById(gc.Req.groupId)
+	if err != nil {
+		gc.Res.Err = err
+		return
+	}
+
+	if group.Permission == group_permission.PUBLIC {
+		group.AddMembers(user.ID)
+	} else if group.Permission == group_permission.UNPUBLIC {
+		joinReq := &entity.JoinRequest{Group: group.ID, User: user.ID}
+		group.AddJoinRequests(joinReq)
+	} else {
+
+	}
+
+	gc.groupRepo.Save(group)
+	gc.Res.Err = nil
+}
+
+func NewJoinGroupUseCase(
+	userRepo repository.UserRepo,
+	groupRepo repository.GroupRepo,
+	req *JoinGroupUseCaseReq,
+	res *JoinGroupUseCaseRes,
+) usecase.UseCase {
+	return &JoinGroupUseCase{userRepo, groupRepo, req, res}
+}
+
+func NewJoinGroupUseCaseReq(user, group uuid.UUID) JoinGroupUseCaseReq {
+	return JoinGroupUseCaseReq{userId: user, groupId: group}
+}
+
+func NewJoinGroupUseCaseRes() JoinGroupUseCaseRes {
+	return JoinGroupUseCaseRes{}
+}

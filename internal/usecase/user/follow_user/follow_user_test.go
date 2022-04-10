@@ -48,7 +48,7 @@ func TestFollowPrivateUser(t *testing.T) {
 		func(arg *entity.User) { followee = arg },
 	)
 
-	req := follow_user.NewFollowUserUseCaseReq(followerId.String(), followeeId.String())
+	req := follow_user.NewFollowUserUseCaseReq(followerId, followeeId)
 	res := follow_user.NewFollowUserUseCaseRes()
 	uc := follow_user.NewFollowUserUseCase(repo, &req, &res)
 
@@ -91,7 +91,7 @@ func TestFollowPublicUser(t *testing.T) {
 		func(arg *entity.User) { followee = arg },
 	)
 
-	req := follow_user.NewFollowUserUseCaseReq(followerId.String(), followeeId.String())
+	req := follow_user.NewFollowUserUseCaseReq(followerId, followeeId)
 	res := follow_user.NewFollowUserUseCaseRes()
 	uc := follow_user.NewFollowUserUseCase(repo, &req, &res)
 

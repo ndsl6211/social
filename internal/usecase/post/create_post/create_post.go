@@ -9,10 +9,10 @@ import (
 )
 
 type CreatePostUseCaseReq struct {
-	Title      string
-	Content    string
-	OwnerId    uuid.UUID
-	Permission post_permission.PostPermission
+	title      string
+	content    string
+	ownerId    uuid.UUID
+	permission post_permission.PostPermission
 }
 
 type CreatePostUseCaseRes struct {
@@ -28,13 +28,13 @@ type CreatePostUseCase struct {
 }
 
 func (uc *CreatePostUseCase) Execute() {
-	owner, err := uc.userRepo.GetUserById(uc.req.OwnerId)
+	owner, err := uc.userRepo.GetUserById(uc.req.ownerId)
 	if err != nil {
 		uc.res.Err = err
 		return
 	}
 
-	post := entity.NewPost(uuid.New(), uc.req.Title, uc.req.Content, owner, uc.req.Permission)
+	post := entity.NewPost(uuid.New(), uc.req.title, uc.req.content, owner, uc.req.permission)
 	uc.postRepo.Save(post)
 
 	uc.res.Err = nil

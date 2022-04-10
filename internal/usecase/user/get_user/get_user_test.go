@@ -48,7 +48,7 @@ func TestGetUserUseCase(t *testing.T) {
 	repo := mock.NewMockUserRepo(mockCtrl)
 	repo.EXPECT().GetUserById(userId).Return(user, nil)
 
-	req := get_user.NewGetUserUseCaseReq(userId.String())
+	req := get_user.NewGetUserUseCaseReq(userId)
 	res := get_user.NewGetUserUseCaseRes()
 	usecase := get_user.NewGetUserUseCase(repo, &req, &res)
 	usecase.Execute()
