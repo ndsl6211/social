@@ -8,14 +8,21 @@ import (
 	"time"
 )
 
+type JoinRequest struct {
+	User  uuid.UUID
+	Group uuid.UUID
+	Admin uuid.UUID
+}
+
 type Group struct {
-	ID         uuid.UUID
-	Name       string
-	Owner      *User
-	Permission group_permission.GroupPermission
-	Admins     []uuid.UUID
-	CreatedAt  time.Time
-	Members    []uuid.UUID
+	ID           uuid.UUID
+	Name         string
+	Owner        *User
+	Permission   group_permission.GroupPermission
+	Admins       []uuid.UUID
+	CreatedAt    time.Time
+	Members      []uuid.UUID
+	JoinRequests []*JoinRequest
 }
 
 func NewGroup(
@@ -58,4 +65,8 @@ func (g *Group) RemoveAdmins(userId uuid.UUID) {
 	idx := slices.Index(g.Admins, userId)
 
 	g.Admins = slices.Delete(g.Admins, idx, idx+1)
+}
+
+func (g *Group) AddJoinRequests(req *JoinRequest) {
+	g.JoinRequests = append(g.JoinRequests, req)
 }
