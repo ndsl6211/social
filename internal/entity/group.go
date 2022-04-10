@@ -13,15 +13,22 @@ type JoinRequest struct {
 	Group uuid.UUID
 }
 
+type InviteRequest struct {
+	Invitee uuid.UUID
+	Group   uuid.UUID
+	Inviter uuid.UUID
+}
+
 type Group struct {
-	ID           uuid.UUID
-	Name         string
-	Owner        *User
-	Permission   group_permission.GroupPermission
-	Admins       []uuid.UUID
-	CreatedAt    time.Time
-	Members      []uuid.UUID
-	JoinRequests []*JoinRequest
+	ID             uuid.UUID
+	Name           string
+	Owner          *User
+	Permission     group_permission.GroupPermission
+	Admins         []uuid.UUID
+	CreatedAt      time.Time
+	Members        []uuid.UUID
+	JoinRequests   []*JoinRequest
+	InviteRequests []*InviteRequest
 }
 
 func NewGroup(
@@ -68,4 +75,8 @@ func (g *Group) RemoveAdmins(userId uuid.UUID) {
 
 func (g *Group) AddJoinRequests(req *JoinRequest) {
 	g.JoinRequests = append(g.JoinRequests, req)
+}
+
+func (g *Group) AddInviteRequests(req *InviteRequest) {
+	g.InviteRequests = append(g.InviteRequests, req)
 }

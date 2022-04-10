@@ -22,7 +22,7 @@ func TestJoinPublicGroup(t *testing.T) {
 	owner := entity.NewUser(
 		ownerId,
 		"owner",
-		"owner@email.com",
+		"owner display name",
 		"owner@email.com",
 		false,
 	)
@@ -71,7 +71,7 @@ func TestJoinUnpublicGroup(t *testing.T) {
 	owner := entity.NewUser(
 		ownerId,
 		"owner",
-		"owner@email.com",
+		"owner display name",
 		"owner@email.com",
 		false,
 	)
@@ -120,7 +120,7 @@ func TestJoinPrivateGroup(t *testing.T) {
 	owner := entity.NewUser(
 		ownerId,
 		"owner",
-		"owner@email.com",
+		"user display name",
 		"owner@email.com",
 		false,
 	)
