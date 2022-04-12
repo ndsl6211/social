@@ -36,7 +36,7 @@ func (gc *JoinGroupUseCase) Execute() {
 	if group.Permission == group_permission.PUBLIC {
 		group.AddMembers(user.ID)
 	} else if group.Permission == group_permission.UNPUBLIC {
-		joinReq := &entity.JoinRequest{Group: group.ID, User: user.ID}
+		joinReq := &entity.JoinRequest{Group: group.ID, Requester: user.ID}
 		group.AddJoinRequests(joinReq)
 	} else {
 		return

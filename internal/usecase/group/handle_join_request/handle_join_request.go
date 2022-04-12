@@ -42,7 +42,7 @@ func (gc *HandleJoinRequestUseCase) Execute() {
 		gc.Res.Err = err
 		return
 	}
-	if !slices.Contains(group.Admins, approver.ID) {
+	if !slices.Contains(group.Admins, approver.ID) && approver != group.Owner {
 		errMsg := "permission denied"
 		gc.Res.Err = errors.New(errMsg)
 		return
