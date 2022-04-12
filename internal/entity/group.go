@@ -9,8 +9,8 @@ import (
 )
 
 type JoinRequest struct {
-	User  uuid.UUID
-	Group uuid.UUID
+	Requester uuid.UUID
+	Group     uuid.UUID
 }
 
 type InviteRequest struct {
