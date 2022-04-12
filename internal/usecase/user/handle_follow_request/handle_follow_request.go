@@ -17,23 +17,23 @@ const (
 	REJECT_FOLLOW_REQUEST HandleFollowRequestAction = "REJECT"
 )
 
-type HandleFollowRequestUsecaseReq struct {
+type HandleFollowRequestUseCaseReq struct {
 	userId     uuid.UUID
 	followerId uuid.UUID
 	action     HandleFollowRequestAction
 }
 
-type HandleFollowRequestUsecaseRes struct {
+type HandleFollowRequestUseCaseRes struct {
 	Err error
 }
 
-type HandleFollowRequestUsecase struct {
+type HandleFollowRequestUseCase struct {
 	userRepo repository.UserRepo
-	Req      *HandleFollowRequestUsecaseReq
-	Res      *HandleFollowRequestUsecaseRes
+	Req      *HandleFollowRequestUseCaseReq
+	Res      *HandleFollowRequestUseCaseRes
 }
 
-func (uc *HandleFollowRequestUsecase) Execute() {
+func (uc *HandleFollowRequestUseCase) Execute() {
 	user, err := uc.userRepo.GetUserById(uc.Req.userId)
 	if err != nil {
 		uc.Res.Err = err
@@ -85,22 +85,22 @@ func (uc *HandleFollowRequestUsecase) Execute() {
 	uc.Res.Err = nil
 }
 
-func NewHandleFollowRequestUsecase(
+func NewHandleFollowRequestUseCase(
 	userRepo repository.UserRepo,
-	req *HandleFollowRequestUsecaseReq,
-	res *HandleFollowRequestUsecaseRes,
+	req *HandleFollowRequestUseCaseReq,
+	res *HandleFollowRequestUseCaseRes,
 ) usecase.UseCase {
-	return &HandleFollowRequestUsecase{userRepo, req, res}
+	return &HandleFollowRequestUseCase{userRepo, req, res}
 }
 
-func NewHandleFollowRequestUsecaseReq(
+func NewHandleFollowRequestUseCaseReq(
 	userId uuid.UUID,
 	followerId uuid.UUID,
 	action HandleFollowRequestAction,
-) HandleFollowRequestUsecaseReq {
-	return HandleFollowRequestUsecaseReq{userId, followerId, action}
+) HandleFollowRequestUseCaseReq {
+	return HandleFollowRequestUseCaseReq{userId, followerId, action}
 }
 
-func NewHandleFollowRequestUsecaseRes() HandleFollowRequestUsecaseRes {
-	return HandleFollowRequestUsecaseRes{}
+func NewHandleFollowRequestUsecaseRes() HandleFollowRequestUseCaseRes {
+	return HandleFollowRequestUseCaseRes{}
 }
