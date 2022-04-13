@@ -219,10 +219,6 @@ func TestDenyJoinRequest(t *testing.T) {
 	groupRepo := mock.NewMockGroupRepo(mockCtrl)
 	groupRepo.EXPECT().GetGroupById(groupId).Return(group, nil)
 
-	groupRepo.EXPECT().Save(gomock.AssignableToTypeOf(&entity.Group{})).Do(
-		func(arg *entity.Group) { group = arg },
-	)
-
 	req := handle_join_request.NewHandleJoinRequestUseCaseReq(
 		requesterId,
 		groupId,
