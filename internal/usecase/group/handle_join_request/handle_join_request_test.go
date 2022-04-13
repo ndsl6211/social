@@ -230,10 +230,7 @@ func TestDenyJoinRequest(t *testing.T) {
 	gc := handle_join_request.NewHandleJoinRequestUseCase(userRepo, groupRepo, &req, &res)
 	gc.Execute()
 
-	if res.Err != nil {
-		t.Errorf("failed to execute usecase")
-	}
-
 	assert.Equal(t, len(group.JoinRequests), 1)
+	assert.Equal(t, res.Err.Error(), "permission denied")
 	assert.Equal(t, len(group.Members), 0)
 }
