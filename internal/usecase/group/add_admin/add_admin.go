@@ -41,6 +41,11 @@ func (gc *AddAdminUseCase) Execute() {
 		return
 	}
 
+	if !slices.Contains(group.Members, member.ID) {
+		errMsg := "permission denied"
+		gc.res.Err = errors.New(errMsg)
+		return
+	}
 	group.AddAdmins(member.ID)
 	gc.groupRepo.Save(group)
 	gc.res.Err = nil
