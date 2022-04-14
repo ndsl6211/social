@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-func TestAcceptAddAdminByOwner(t *testing.T) {
+func TestAddAdminSucceedByOwner(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
@@ -74,7 +74,76 @@ func TestAcceptAddAdminByOwner(t *testing.T) {
 	assert.Equal(t, len(group.Members), 1)
 }
 
-func TestRejectAddAdmin(t *testing.T) {
+func TestAddAdminSucceedByAdmin(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	memberId := uuid.New()
+	groupId := uuid.New()
+	adminId := uuid.New()
+	ownerId := uuid.New()
+
+	member := entity.NewUser(
+		memberId,
+		"member",
+		"member display name",
+		"member@email.com",
+		false,
+	)
+	owner := entity.NewUser(
+		ownerId,
+		"owner",
+		"owner display name",
+		"owner@email.com",
+		false,
+	)
+	admin := entity.NewUser(
+		adminId,
+		"name",
+		"name display name",
+		"name@email.com",
+		false,
+	)
+	group := &entity.Group{
+		ID:             groupId,
+		Name:           "first group",
+		Owner:          owner,
+		Permission:     group_permission.UNPUBLIC,
+		Admins:         []uuid.UUID{admin.ID},
+		CreatedAt:      time.Time{},
+		Members:        []uuid.UUID{member.ID},
+		JoinRequests:   nil,
+		InviteRequests: nil,
+	}
+
+	userRepo := mock.NewMockUserRepo(mockCtrl)
+	userRepo.EXPECT().GetUserById(memberId).Return(member, nil)
+	userRepo.EXPECT().GetUserById(adminId).Return(admin, nil)
+	groupRepo := mock.NewMockGroupRepo(mockCtrl)
+	groupRepo.EXPECT().GetGroupById(groupId).Return(group, nil)
+
+	groupRepo.EXPECT().Save(gomock.AssignableToTypeOf(&entity.Group{})).Do(
+		func(arg *entity.Group) { group = arg },
+	)
+
+	req := add_admin.NewAddAdminUseCaseReq(
+		memberId,
+		groupId,
+		adminId,
+	)
+
+	res := add_admin.NewAddAdminUseCaseRes()
+	gc := add_admin.NewAddAdminUseCase(groupRepo, userRepo, &req, &res)
+	gc.Execute()
+
+	if res.Err != nil {
+		t.Errorf("failed to execute usecase")
+	}
+
+	assert.Equal(t, len(group.Admins), 2)
+	assert.Equal(t, len(group.Members), 1)
+}
+func TestAddAdminFail(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
