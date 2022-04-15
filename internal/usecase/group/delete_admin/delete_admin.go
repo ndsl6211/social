@@ -33,7 +33,7 @@ func (gc *DeleteAdminUseCase) Execute() {
 		gc.res.Err = err
 		return
 	}
-	if !slices.Contains(group.Admins, admin.ID) && admin == group.Owner {
+	if !slices.Contains(group.Admins, admin.ID) && admin != group.Owner {
 		errMsg := "permission denied"
 		gc.res.Err = errors.New(errMsg)
 		return
