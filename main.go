@@ -51,7 +51,7 @@ func main() {
 	// }
 
 	// have user1 follow user2
-	req := follow_user.NewFollowUserUseCaseReq(user1.ID.String(), user2.ID.String())
+	req := follow_user.NewFollowUserUseCaseReq(user1.ID, user2.ID)
 	res := follow_user.NewFollowUserUseCaseRes()
 	uc := follow_user.NewFollowUserUseCase(userRepo, &req, &res)
 	uc.Execute()
