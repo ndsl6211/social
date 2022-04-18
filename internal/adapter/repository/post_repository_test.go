@@ -1,4 +1,4 @@
-package adapter_test
+package adapter_repository_test
 
 import (
 	"errors"
@@ -7,7 +7,7 @@ import (
 	"github.com/go-playground/assert/v2"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
-	"mashu.example/internal/adapter"
+	adapter_repository "mashu.example/internal/adapter/repository"
 	"mashu.example/internal/entity"
 	"mashu.example/internal/entity/enums/post_permission"
 	"mashu.example/internal/usecase/repository"
@@ -16,7 +16,7 @@ import (
 
 func setup() repository.PostRepo {
 	db := pkg.NewMemoryGormClient()
-	postRepo := adapter.NewPostRepository(db)
+	postRepo := adapter_repository.NewPostRepository(db)
 
 	return postRepo
 }
