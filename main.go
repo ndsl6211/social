@@ -6,7 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
-	"mashu.example/internal/adapter"
+	adapter_repository "mashu.example/internal/adapter/repository"
 	"mashu.example/internal/entity"
 	"mashu.example/internal/entity/enums/post_permission"
 	"mashu.example/internal/usecase/user/follow_user"
@@ -36,19 +36,14 @@ func useful(db *gorm.DB) {
 
 func main() {
 	db := pkg.NewSqliteGormClient()
-	userRepo := adapter.NewUserRepository(db)
-	postRepo := adapter.NewPostRepository(db)
+	userRepo := adapter_repository.NewUserRepository(db)
+	postRepo := adapter_repository.NewPostRepository(db)
 
 	// create users
 	user1 := entity.NewUser(uuid.New(), "mashu6211", "Mashu", "mashu@email.com", false)
 	user2 := entity.NewUser(uuid.New(), "moonnight612", "Winnie", "moonnight612@email.com", false)
-	// user3 := entity.NewUser(uuid.New(), "moonnight612", "Winnie", "moonnight612@email.com", false)
 	userRepo.Save(user1)
 	userRepo.Save(user2)
-	// if err := userRepo.Save(user3); err != nil {
-	// 	fmt.Println("ERROR!")
-	// 	return
-	// }
 
 	// have user1 follow user2
 	req := follow_user.NewFollowUserUseCaseReq(user1.ID, user2.ID)
