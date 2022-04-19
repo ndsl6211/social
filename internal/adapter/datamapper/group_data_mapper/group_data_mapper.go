@@ -1,11 +1,12 @@
 package group_data_mapper
 
 import (
+	"time"
+
 	"github.com/google/uuid"
 	"mashu.example/internal/adapter/datamapper/user_data_mapper"
 	"mashu.example/internal/entity"
 	"mashu.example/internal/entity/enums/group_permission"
-	"time"
 )
 
 type GroupDataMapper struct {

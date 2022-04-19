@@ -28,6 +28,8 @@ type Post struct {
 	Permission post_permission.PostPermission
 
 	Comments []*Comment
+
+	CreatedAt time.Time
 }
 
 func (p *Post) Inspect() {
@@ -52,5 +54,6 @@ func NewPost(
 		Owner:      owner,
 		Permission: permission,
 		Comments:   []*Comment{},
+		CreatedAt:  time.Now(),
 	}
 }
