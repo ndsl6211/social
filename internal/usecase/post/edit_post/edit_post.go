@@ -2,11 +2,16 @@ package edit_post
 
 import (
 	"errors"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"mashu.example/internal/usecase"
 	"mashu.example/internal/usecase/repository"
+)
+
+var (
+	ErrNotOwnerOfPost = errors.New("only the post owner can edit the post")
 )
 
 type EditPostUseCaseReq struct {
@@ -29,20 +34,20 @@ type EditPostUseCase struct {
 func (uc *EditPostUseCase) Execute() {
 	post, err := uc.postRepo.GetPostById(uc.req.postId)
 	if err != nil {
-		logrus.Infof("failed to get post (postId: %s)", uc.req.postId)
+		logrus.Errorf("failed to get post (postId: %s)", uc.req.postId)
 		uc.res.Err = err
 		return
 	}
 
 	if post.Owner.ID != uc.req.ownerId {
-		message := "only the post owner can edit the post"
-		logrus.Error(message)
-		uc.res.Err = errors.New(message)
+		uc.res.Err = ErrNotOwnerOfPost
+		logrus.Error(ErrNotOwnerOfPost.Error())
 		return
 	}
 
 	post.Title = uc.req.newTitle
 	post.Content = uc.req.newContent
+	post.UpdatedAt = time.Now()
 
 	uc.postRepo.Save(post)
 }

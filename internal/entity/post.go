@@ -30,6 +30,7 @@ type Post struct {
 	Comments []*Comment
 
 	CreatedAt time.Time
+	UpdatedAt time.Time
 }
 
 func (p *Post) Inspect() {
@@ -55,5 +56,6 @@ func NewPost(
 		Permission: permission,
 		Comments:   []*Comment{},
 		CreatedAt:  time.Now(),
+		UpdatedAt:  time.Now(),
 	}
 }
