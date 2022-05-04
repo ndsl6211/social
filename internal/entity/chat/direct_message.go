@@ -14,7 +14,20 @@ type Message struct {
 	Timestamp time.Time
 }
 
-func NewMessage(id uuid.UUID, owner *entity.User, content string) *Message {
+func NewMessageWithTime(
+	id uuid.UUID,
+	owner *entity.User,
+	content string,
+	time time.Time,
+) *Message {
+	return &Message{id, owner, content, time}
+}
+
+func NewMessage(
+	id uuid.UUID,
+	owner *entity.User,
+	content string,
+) *Message {
 	return &Message{id, owner, content, time.Now()}
 }
 

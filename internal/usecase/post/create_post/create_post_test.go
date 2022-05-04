@@ -7,7 +7,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	"mashu.example/internal/entity"
-	"mashu.example/internal/entity/enums/post_permission"
+	entity_enums "mashu.example/internal/entity/enums"
 	"mashu.example/internal/usecase/post/create_post"
 	"mashu.example/internal/usecase/repository/mock"
 )
@@ -42,7 +42,7 @@ func TestCreatePost(t *testing.T) {
 		"Hi, Golang",
 		"Hello world!\nHello Clean Architecture!\nHello Domain Driven Design!",
 		ownerId,
-		post_permission.PUBLIC,
+		entity_enums.POST_PUBLIC,
 	)
 	res := create_post.NewCreatePostUseCaseRes()
 	uc := create_post.NewCreatePostUseCase(userRepo, postRepo, req, res)
@@ -56,5 +56,5 @@ func TestCreatePost(t *testing.T) {
 	assert.Equal(t, resultPost.Title, "Hi, Golang")
 	assert.Equal(t, resultPost.Content, "Hello world!\nHello Clean Architecture!\nHello Domain Driven Design!")
 	assert.Equal(t, resultPost.Owner, owner)
-	assert.Equal(t, resultPost.Permission, post_permission.PUBLIC)
+	assert.Equal(t, resultPost.Permission, entity_enums.POST_PUBLIC)
 }

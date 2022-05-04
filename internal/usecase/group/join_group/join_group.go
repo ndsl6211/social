@@ -3,7 +3,7 @@ package join_group
 import (
 	"github.com/google/uuid"
 	"mashu.example/internal/entity"
-	"mashu.example/internal/entity/enums/group_permission"
+	entity_enums "mashu.example/internal/entity/enums"
 	"mashu.example/internal/usecase"
 	"mashu.example/internal/usecase/repository"
 )
@@ -33,9 +33,9 @@ func (gc *JoinGroupUseCase) Execute() {
 		return
 	}
 
-	if group.Permission == group_permission.PUBLIC {
+	if group.Permission == entity_enums.GROUP_PUBLIC {
 		group.AddMembers(user.ID)
-	} else if group.Permission == group_permission.UNPUBLIC {
+	} else if group.Permission == entity_enums.GROUP_UNPUBLIC {
 		joinReq := &entity.JoinRequest{Group: group.ID, User: user.ID}
 		group.AddJoinRequests(joinReq)
 	} else {

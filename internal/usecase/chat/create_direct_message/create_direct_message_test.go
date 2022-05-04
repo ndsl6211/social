@@ -137,6 +137,6 @@ func TestCreateDirectMessageButUserNotExist(t *testing.T) {
 
 	uc.Execute()
 
-	assert.Error(t, res.Err)
-	assert.Equal(t, fmt.Sprintf("user %s not exist", user2Id), res.Err.Error())
+	assert.NotNil(t, res.Err)
+	assert.Equal(t, res.Err.Error(), (&repository.ErrUserNotFound{UserId: user2Id}).Error())
 }

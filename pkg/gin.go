@@ -2,7 +2,7 @@ package pkg
 
 import "github.com/gin-gonic/gin"
 
-func NewGinRouter() *gin.Engine {
+func NewGinEngine() *gin.Engine {
 	r := gin.Default()
 
 	return r

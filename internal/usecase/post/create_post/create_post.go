@@ -3,7 +3,7 @@ package create_post
 import (
 	"github.com/google/uuid"
 	"mashu.example/internal/entity"
-	"mashu.example/internal/entity/enums/post_permission"
+	entity_enums "mashu.example/internal/entity/enums"
 	"mashu.example/internal/usecase"
 	"mashu.example/internal/usecase/repository"
 )
@@ -12,7 +12,7 @@ type CreatePostUseCaseReq struct {
 	title      string
 	content    string
 	ownerId    uuid.UUID
-	permission post_permission.PostPermission
+	permission entity_enums.PostPermission
 }
 
 type CreatePostUseCaseRes struct {
@@ -53,7 +53,7 @@ func NewCreatePostUseCaseReq(
 	title string,
 	content string,
 	ownerId uuid.UUID,
-	permission post_permission.PostPermission,
+	permission entity_enums.PostPermission,
 ) *CreatePostUseCaseReq {
 	return &CreatePostUseCaseReq{title, content, ownerId, permission}
 }

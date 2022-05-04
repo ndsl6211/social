@@ -1,8 +1,9 @@
-package adapter_repository
+package repository
 
 import (
 	"errors"
 	"fmt"
+
 	"mashu.example/internal/adapter/datamapper/post_data_mapper"
 
 	"github.com/google/uuid"

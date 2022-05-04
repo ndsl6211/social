@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"mashu.example/internal/entity"
-	"mashu.example/internal/entity/enums/post_permission"
+	entity_enums "mashu.example/internal/entity/enums"
 	"mashu.example/internal/usecase/post/edit_post"
 	"mashu.example/internal/usecase/repository/mock"
 )
@@ -34,7 +34,7 @@ func TestEditPost(t *testing.T) {
 			Email:       "owner@email.com",
 			Public:      true,
 		},
-		post_permission.PUBLIC,
+		entity_enums.POST_PUBLIC,
 	)
 
 	var updatedPost *entity.Post
@@ -74,7 +74,7 @@ func TestEditNotMyOwnPost(t *testing.T) {
 			Email:       "owner@email.com",
 			Public:      true,
 		},
-		post_permission.PUBLIC,
+		entity_enums.POST_PUBLIC,
 	)
 
 	postRepo.EXPECT().GetPostById(postId).Return(post, nil)

@@ -6,7 +6,7 @@ import (
 	"github.com/google/uuid"
 	"mashu.example/internal/adapter/datamapper/user_data_mapper"
 	"mashu.example/internal/entity"
-	"mashu.example/internal/entity/enums/group_permission"
+	entity_enums "mashu.example/internal/entity/enums"
 )
 
 type GroupDataMapper struct {
@@ -16,7 +16,7 @@ type GroupDataMapper struct {
 	OwnerId uuid.UUID
 	Owner   *user_data_mapper.UserDataMapper
 
-	Permission group_permission.GroupPermission
+	Permission entity_enums.GroupPermission
 	Admins     []*user_data_mapper.UserDataMapper
 	CreatedAt  time.Time
 	Members    []JoinDataMapper

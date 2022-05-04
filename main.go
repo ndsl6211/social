@@ -5,43 +5,29 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"gorm.io/gorm"
+	"github.com/sirupsen/logrus"
+	"mashu.example/internal/adapter/api"
 	adapter_repository "mashu.example/internal/adapter/repository"
 	"mashu.example/internal/entity"
-	"mashu.example/internal/entity/enums/post_permission"
+	entity_enums "mashu.example/internal/entity/enums"
 	"mashu.example/internal/usecase/user/follow_user"
 	"mashu.example/pkg"
 )
 
-func useful(db *gorm.DB) {
-	type User struct {
-		ID        int
-		Followers []*User `gorm:"many2many:user_followers"`
-	}
-
-	type UserFollowers struct {
-		UserID     int `gorm:"primaryKey"`
-		FollowerID int `gorm:"primaryKey"`
-
-		Role int
-	}
-
-	serr := db.SetupJoinTable(&User{}, "Followers", &UserFollowers{})
-	db.AutoMigrate(&User{}, &UserFollowers{})
-
-	if serr != nil {
-		fmt.Println("err when setup:", serr)
-	}
-}
-
 func main() {
-	db := pkg.NewSqliteGormClient()
-	userRepo := adapter_repository.NewUserRepository(db)
-	postRepo := adapter_repository.NewPostRepository(db)
+	logrus.SetLevel(logrus.DebugLevel)
+	sqlite := pkg.NewSqliteGormClient()
+	// redis := pkg.NewRedisClient()
+	userRepo := adapter_repository.NewUserRepository(sqlite)
+	postRepo := adapter_repository.NewPostRepository(sqlite)
+	chatRepo := adapter_repository.NewMemChatRepository()
+	// chatRepo := adapter_repository.NewRedisChatRepository(redis)
 
 	// create users
-	user1 := entity.NewUser(uuid.New(), "mashu6211", "Mashu", "mashu@email.com", false)
-	user2 := entity.NewUser(uuid.New(), "moonnight612", "Winnie", "moonnight612@email.com", false)
+	userId1 := uuid.MustParse("089b5667-85fe-4e9c-8990-1be35ca6f082")
+	userId2 := uuid.MustParse("e7b81c43-d9b6-4f0c-b349-88e321115cc5")
+	user1 := entity.NewUser(userId1, "mashu6211", "Mashu", "mashu@email.com", false)
+	user2 := entity.NewUser(userId2, "moonnight612", "Winnie", "moonnight612@email.com", true)
 	userRepo.Save(user1)
 	userRepo.Save(user2)
 
@@ -57,7 +43,7 @@ func main() {
 
 	// create post with comment
 	postId := uuid.MustParse("11111111-0000-0000-0000-000000000000")
-	post := entity.NewPost(postId, "My First Post", "My first content", user1, post_permission.PUBLIC)
+	post := entity.NewPost(postId, "My First Post", "My first content", user1, entity_enums.POST_PUBLIC)
 	post.Comments = append(post.Comments, &entity.Comment{
 		ID:        uuid.New(),
 		Owner:     user1,
@@ -74,4 +60,9 @@ func main() {
 	})
 
 	postRepo.Save(post)
+
+	engine := pkg.NewGinEngine()
+	api.RegisterWebsocketApi(engine, userRepo, chatRepo)
+
+	engine.Run(":11000")
 }

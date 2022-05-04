@@ -2,12 +2,11 @@ package create_direct_message
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/exp/slices"
-	chat "mashu.example/internal/entity/chat"
+	entity "mashu.example/internal/entity/chat"
 	"mashu.example/internal/usecase"
 	"mashu.example/internal/usecase/repository"
 )
@@ -18,8 +17,16 @@ var (
 )
 
 type CreateDirectMessageUseCaseReq struct {
-	senderId   uuid.UUID
-	receiverId uuid.UUID
+	SenderId   uuid.UUID
+	ReceiverId uuid.UUID
+}
+
+func (req CreateDirectMessageUseCaseReq) Validate() bool {
+	if (uuid.UUID{}) == req.SenderId || (uuid.UUID{}) == req.ReceiverId {
+		return false
+	}
+
+	return true
 }
 
 type CreateDirectMessageUseCaseRes struct {
@@ -35,31 +42,29 @@ type CreateDirectMessageUseCase struct {
 }
 
 func (uc *CreateDirectMessageUseCase) Execute() {
-	sender, err := uc.userRepo.GetUserById(uc.req.senderId)
+	sender, err := uc.userRepo.GetUserById(uc.req.SenderId)
 	if err != nil {
-		errMsg := fmt.Sprintf("user %s not exist", uc.req.senderId)
-		logrus.Error(errMsg)
-		uc.res.Err = errors.New(errMsg)
+		uc.res.Err = &repository.ErrUserNotFound{UserId: uc.req.SenderId}
+		logrus.Error(uc.res.Err)
 		return
 	}
 
-	receiver, err := uc.userRepo.GetUserById(uc.req.receiverId)
+	receiver, err := uc.userRepo.GetUserById(uc.req.ReceiverId)
 	if err != nil {
-		errMsg := fmt.Sprintf("user %s not exist", uc.req.receiverId)
-		logrus.Error(errMsg)
-		uc.res.Err = errors.New(errMsg)
+		uc.res.Err = &repository.ErrUserNotFound{UserId: uc.req.ReceiverId}
+		logrus.Error(uc.res.Err)
 		return
 	}
 
 	dm, err := uc.chatRepo.GetDMByUserId(sender.ID, receiver.ID)
 	if dm != nil {
 		uc.res.Err = ErrChatRoomAlreadyExist
-		logrus.Info(ErrChatRoomAlreadyExist.Error())
+		logrus.Error(ErrChatRoomAlreadyExist.Error())
 		return
 	}
 	if _, ok := err.(*repository.ErrDMNotFound); !ok {
 		uc.res.Err = err
-		logrus.Error(err)
+		logrus.Warn(err)
 		return
 	}
 
@@ -70,7 +75,7 @@ func (uc *CreateDirectMessageUseCase) Execute() {
 	}
 
 	id := uuid.New()
-	dm = chat.NewDirectMessage(id, sender, receiver)
+	dm = entity.NewDirectMessage(id, sender, receiver)
 	if err := uc.chatRepo.SaveDirectMessage(dm); err != nil {
 		uc.res.Err = err
 		return
