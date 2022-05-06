@@ -35,11 +35,11 @@ func (gc *JoinGroupUseCase) Execute() {
 
 	if group.Permission == entity_enums.GROUP_PUBLIC {
 		group.AddMembers(user.ID)
-	} else if group.Permission == entity_enums.GROUP_UNPUBLIC {
-		joinReq := &entity.JoinRequest{Group: group.ID, User: user.ID}
+	} else if group.Permission == group_permission.UNPUBLIC {
+		joinReq := &entity.JoinRequest{Group: group.ID, Requester: user.ID}
 		group.AddJoinRequests(joinReq)
 	} else {
-
+		return
 	}
 
 	gc.groupRepo.Save(group)

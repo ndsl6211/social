@@ -64,13 +64,13 @@ func TestAcceptFollowRequest(t *testing.T) {
 		func(arg *entity.User) { follower = arg },
 	)
 
-	req := handle_follow_request.NewHandleFollowRequestUsecaseReq(
+	req := handle_follow_request.NewHandleFollowRequestUseCaseReq(
 		followeeId,
 		followerId,
 		handle_follow_request.ACCEPT_FOLLOW_REQUEST,
 	)
 	res := handle_follow_request.NewHandleFollowRequestUsecaseRes()
-	uc := handle_follow_request.NewHandleFollowRequestUsecase(repo, &req, &res)
+	uc := handle_follow_request.NewHandleFollowRequestUseCase(repo, &req, &res)
 
 	uc.Execute()
 
@@ -138,13 +138,13 @@ func TestRejectFollowRequest(t *testing.T) {
 		func(arg *entity.User) { follower = arg },
 	)
 
-	req := handle_follow_request.NewHandleFollowRequestUsecaseReq(
+	req := handle_follow_request.NewHandleFollowRequestUseCaseReq(
 		followeeId,
 		followerId,
 		handle_follow_request.REJECT_FOLLOW_REQUEST,
 	)
 	res := handle_follow_request.NewHandleFollowRequestUsecaseRes()
-	uc := handle_follow_request.NewHandleFollowRequestUsecase(repo, &req, &res)
+	uc := handle_follow_request.NewHandleFollowRequestUseCase(repo, &req, &res)
 
 	uc.Execute()
 
