@@ -3,7 +3,7 @@ package create_group
 import (
 	"github.com/google/uuid"
 	"mashu.example/internal/entity"
-	"mashu.example/internal/entity/enums/group_permission"
+	entity_enums "mashu.example/internal/entity/enums"
 	"mashu.example/internal/usecase"
 	"mashu.example/internal/usecase/repository"
 )
@@ -11,7 +11,7 @@ import (
 type CreateGroupUseCaseReq struct {
 	name       string
 	ownerId    uuid.UUID
-	permission group_permission.GroupPermission
+	permission entity_enums.GroupPermission
 }
 
 type CreateGroupUseCaseRes struct {
@@ -51,7 +51,7 @@ func NewCreateGroupUseCase(
 func NewCreateGroupUseCaseReq(
 	name string,
 	ownerId uuid.UUID,
-	permission group_permission.GroupPermission,
+	permission entity_enums.GroupPermission,
 ) *CreateGroupUseCaseReq {
 	return &CreateGroupUseCaseReq{name, ownerId, permission}
 }

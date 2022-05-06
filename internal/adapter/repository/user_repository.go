@@ -1,7 +1,8 @@
-package adapter
+package repository
 
 import (
 	"errors"
+
 	"mashu.example/internal/adapter/datamapper/user_data_mapper"
 
 	"github.com/google/uuid"

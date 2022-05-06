@@ -1,12 +1,13 @@
 package post_data_mapper
 
 import (
-	"mashu.example/internal/adapter/datamapper/user_data_mapper"
 	"time"
+
+	"mashu.example/internal/adapter/datamapper/user_data_mapper"
+	entity_enums "mashu.example/internal/entity/enums"
 
 	"github.com/google/uuid"
 	"mashu.example/internal/entity"
-	"mashu.example/internal/entity/enums/post_permission"
 )
 
 type CommentDataMapper struct {
@@ -47,15 +48,16 @@ func NewCommentDataMapper(comment *entity.Comment) *CommentDataMapper {
 }
 
 type PostDataMapper struct {
-	ID         uuid.UUID                      `gorm:"primaryKey"`
-	Title      string                         `gorm:"column:title"`
-	Content    string                         `gorm:"column:content"`
-	Permission post_permission.PostPermission `gorm:"public"`
+	ID         uuid.UUID                   `gorm:"primaryKey"`
+	Title      string                      `gorm:"column:title"`
+	Content    string                      `gorm:"column:content"`
+	Permission entity_enums.PostPermission `gorm:"public"`
 
 	OwnerId uuid.UUID
 	Owner   *user_data_mapper.UserDataMapper `gorm:"foreignKey:OwnerId"`
 
 	Comments []*CommentDataMapper `gorm:"foreignKey:PostId"`
+	CreateAt time.Time            `gorm:"column:created_at"`
 }
 
 func (PostDataMapper) TableName() string {
@@ -86,5 +88,6 @@ func NewPostDataMapper(post *entity.Post) *PostDataMapper {
 		OwnerId:    post.Owner.ID,
 		Owner:      user_data_mapper.NewUserDataMapper(post.Owner),
 		Comments:   comments,
+		CreateAt:   post.CreatedAt,
 	}
 }

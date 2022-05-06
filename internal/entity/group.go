@@ -2,10 +2,11 @@ package entity
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/google/uuid"
 	"golang.org/x/exp/slices"
-	"mashu.example/internal/entity/enums/group_permission"
-	"time"
+	entity_enums "mashu.example/internal/entity/enums"
 )
 
 type JoinRequest struct {
@@ -35,7 +36,7 @@ func NewGroup(
 	id uuid.UUID,
 	name string,
 	owner *User,
-	permission group_permission.GroupPermission,
+	permission entity_enums.GroupPermission,
 ) *Group {
 	return &Group{
 		ID:         id,

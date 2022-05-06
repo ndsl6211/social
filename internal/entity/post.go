@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"mashu.example/internal/entity/enums/post_permission"
+	entity_enums "mashu.example/internal/entity/enums"
 )
 
 type Comment struct {
@@ -25,9 +25,12 @@ type Post struct {
 	Title      string
 	Content    string
 	Owner      *User
-	Permission post_permission.PostPermission
+	Permission entity_enums.PostPermission
 
 	Comments []*Comment
+
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }
 
 func (p *Post) Inspect() {
@@ -43,7 +46,7 @@ func NewPost(
 	title string,
 	content string,
 	owner *User,
-	permission post_permission.PostPermission,
+	permission entity_enums.PostPermission,
 ) *Post {
 	return &Post{
 		ID:         id,
@@ -52,5 +55,7 @@ func NewPost(
 		Owner:      owner,
 		Permission: permission,
 		Comments:   []*Comment{},
+		CreatedAt:  time.Now(),
+		UpdatedAt:  time.Now(),
 	}
 }

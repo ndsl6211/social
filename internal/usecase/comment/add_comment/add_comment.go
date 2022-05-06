@@ -2,14 +2,18 @@ package add_comment
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"mashu.example/internal/entity"
-	"mashu.example/internal/entity/enums/post_permission"
+	entity_enums "mashu.example/internal/entity/enums"
 	"mashu.example/internal/usecase"
 	"mashu.example/internal/usecase/repository"
+)
+
+var (
+	ErrAddCommentUnderPrivatePost     = errors.New("can not add comment under private post")
+	ErrAddCommentUnderFollowrOnlyPost = errors.New("only the follower can comment under the follower-only post")
 )
 
 type AddCommentUseCaseReq struct {
@@ -32,26 +36,25 @@ type AddCommentUseCase struct {
 func (uc *AddCommentUseCase) Execute() {
 	post, err := uc.postRepo.GetPostById(uc.req.postId)
 	if err != nil {
-		logrus.Errorf("failed to get post (postId: %s)", uc.req.postId)
-		uc.res.Err = err
+		uc.res.Err = &repository.ErrPostNotFound{PostId: uc.req.postId}
+		logrus.Error(uc.res.Err)
 		return
 	}
 
-	if post.Permission == post_permission.PRIVATE {
-		errMsg := fmt.Sprintf("can not add comment under private post (postId: %s)", uc.req.postId)
-		logrus.Errorf(errMsg)
-		uc.res.Err = errors.New(errMsg)
+	if post.Permission == entity_enums.POST_PRIVATE {
+		uc.res.Err = ErrAddCommentUnderPrivatePost
+		logrus.Error(uc.res.Err)
 		return
 	}
 
 	commentOwner, err := uc.userRepo.GetUserById(uc.req.ownerId)
 	if err != nil {
-		logrus.Errorf("failed to get comment owner (userId: %s)", uc.req.ownerId)
-		uc.res.Err = err
+		uc.res.Err = &repository.ErrUserNotFound{UserId: uc.req.ownerId}
+		logrus.Error(uc.res.Err)
 		return
 	}
 
-	if post.Permission == post_permission.FOLLOWER_ONLY {
+	if post.Permission == entity_enums.POST_FOLLOWER_ONLY {
 		isFollower := false
 		for _, followerID := range post.Owner.Followers {
 			if followerID == commentOwner.ID {
@@ -61,9 +64,8 @@ func (uc *AddCommentUseCase) Execute() {
 		}
 
 		if !isFollower {
-			errMsg := "only the follower can comment below the follower-only post"
-			logrus.Errorf(errMsg)
-			uc.res.Err = errors.New(errMsg)
+			uc.res.Err = ErrAddCommentUnderFollowrOnlyPost
+			logrus.Error(uc.res.Err)
 			return
 		}
 	}

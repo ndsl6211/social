@@ -1,4 +1,4 @@
-package adapter_test
+package repository_test
 
 import (
 	"errors"
@@ -7,16 +7,16 @@ import (
 	"github.com/go-playground/assert/v2"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
-	"mashu.example/internal/adapter"
+	adapter_repository "mashu.example/internal/adapter/repository"
 	"mashu.example/internal/entity"
-	"mashu.example/internal/entity/enums/post_permission"
+	entity_enums "mashu.example/internal/entity/enums"
 	"mashu.example/internal/usecase/repository"
 	"mashu.example/pkg"
 )
 
 func setup() repository.PostRepo {
 	db := pkg.NewMemoryGormClient()
-	postRepo := adapter.NewPostRepository(db)
+	postRepo := adapter_repository.NewPostRepository(db)
 
 	return postRepo
 }
@@ -36,7 +36,7 @@ func TestGetPostById(t *testing.T) {
 			"owner@email.com",
 			false,
 		),
-		Permission: post_permission.PUBLIC,
+		Permission: entity_enums.POST_PUBLIC,
 	})
 
 	resultPost, err := postRepo.GetPostById(postId)
@@ -47,7 +47,7 @@ func TestGetPostById(t *testing.T) {
 	assert.Equal(t, resultPost.ID, postId)
 	assert.Equal(t, resultPost.Title, "Hi, Golang")
 	assert.Equal(t, resultPost.Content, "Hi, Clean Architecture!\nHi, Domain Driven Design!")
-	assert.Equal(t, resultPost.Permission, post_permission.PUBLIC)
+	assert.Equal(t, resultPost.Permission, entity_enums.POST_PUBLIC)
 	assert.Equal(t, resultPost.Owner.ID, uuid.MustParse("10101010-0000-0000-0000-000000000000"))
 	assert.Equal(t, resultPost.Owner.UserName, "owner")
 	assert.Equal(t, resultPost.Owner.DisplayName, "owner display name")

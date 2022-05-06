@@ -1,14 +1,15 @@
 package create_group_test
 
 import (
+	"testing"
+
 	"github.com/go-playground/assert/v2"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	"mashu.example/internal/entity"
-	"mashu.example/internal/entity/enums/group_permission"
+	entity_enums "mashu.example/internal/entity/enums"
 	"mashu.example/internal/usecase/group/create_group"
 	"mashu.example/internal/usecase/repository/mock"
-	"testing"
 )
 
 func setup(t *testing.T) (*mock.MockGroupRepo, *mock.MockUserRepo) {
@@ -37,7 +38,7 @@ func TestCreatePublicGroup(t *testing.T) {
 	req := create_group.NewCreateGroupUseCaseReq(
 		"First Group",
 		ownerId,
-		group_permission.PUBLIC,
+		entity_enums.GROUP_PUBLIC,
 	)
 	res := create_group.NewCreateGroupUseCaseRes()
 	gc := create_group.NewCreateGroupUseCase(groupRepo, userRepo, req, res)
@@ -50,7 +51,7 @@ func TestCreatePublicGroup(t *testing.T) {
 
 	assert.Equal(t, resultGroup.Name, "First Group")
 	assert.Equal(t, resultGroup.Owner, owner)
-	assert.Equal(t, resultGroup.Permission, group_permission.PUBLIC)
+	assert.Equal(t, resultGroup.Permission, entity_enums.GROUP_PUBLIC)
 }
 
 func TestCreateUnpublicGroup(t *testing.T) {

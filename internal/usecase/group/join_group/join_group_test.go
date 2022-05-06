@@ -1,14 +1,15 @@
 package join_group_test
 
 import (
+	"testing"
+
 	"github.com/go-playground/assert/v2"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	"mashu.example/internal/entity"
-	"mashu.example/internal/entity/enums/group_permission"
+	entity_enums "mashu.example/internal/entity/enums"
 	"mashu.example/internal/usecase/group/join_group"
 	"mashu.example/internal/usecase/repository/mock"
-	"testing"
 )
 
 func TestJoinPublicGroup(t *testing.T) {
@@ -37,7 +38,7 @@ func TestJoinPublicGroup(t *testing.T) {
 		groupId,
 		"group",
 		owner,
-		group_permission.PUBLIC,
+		entity_enums.GROUP_PUBLIC,
 	)
 
 	groupRepo := mock.NewMockGroupRepo(mockCtrl)
