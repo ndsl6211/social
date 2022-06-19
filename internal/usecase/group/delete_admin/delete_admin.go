@@ -2,10 +2,18 @@ package delete_admin
 
 import (
 	"errors"
+
 	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 	"golang.org/x/exp/slices"
+	"mashu.example/internal/entity"
 	"mashu.example/internal/usecase"
 	"mashu.example/internal/usecase/repository"
+)
+
+var (
+	ErrNotGroupOwnerOrAdmin = errors.New("only the group owner or admin can remove admin")
+	ErrAdminNotFound        = errors.New("admin not found")
 )
 
 type DeleteAdminUseCaseReq struct {
@@ -25,34 +33,49 @@ type DeleteAdminUseCase struct {
 	res       *DeleteAdminUseCaseRes
 }
 
-func (gc *DeleteAdminUseCase) Execute() {
-	user, err := gc.userRepo.GetUserById(gc.req.userId)
-	group, err := gc.groupRepo.GetGroupById(gc.req.groupId)
-	admin, err := gc.userRepo.GetUserById(gc.req.adminId)
+func (uc *DeleteAdminUseCase) Execute() {
+	user, err := uc.userRepo.GetUserById(uc.req.userId)
 	if err != nil {
-		gc.res.Err = err
+		uc.res.Err = err
+		logrus.Error(err)
 		return
 	}
-	if !slices.Contains(group.Admins, admin.ID) && admin != group.Owner {
-		errMsg := "permission denied"
-		gc.res.Err = errors.New(errMsg)
+	group, err := uc.groupRepo.GetGroupById(uc.req.groupId)
+	if err != nil {
+		uc.res.Err = err
+		logrus.Error(err)
+		return
+	}
+	_, err = uc.userRepo.GetUserById(uc.req.adminId)
+	if err != nil {
+		uc.res.Err = err
+		logrus.Error(err)
 		return
 	}
 
-	idx := slices.IndexFunc(group.Admins, func(req uuid.UUID) bool {
-		return req == user.ID
+	// check whether `uc.req.adminId` is admin
+	isNotAdmin := (slices.IndexFunc(group.Admins, func(admin *entity.GroupAdmin) bool {
+		return admin.UserId == uc.req.adminId
+	}) == -1)
+	if uc.req.adminId != group.Owner.ID && isNotAdmin {
+		uc.res.Err = ErrNotGroupOwnerOrAdmin
+		logrus.Error(uc.res.Err)
+		return
+	}
+
+	idx := slices.IndexFunc(group.Admins, func(admin *entity.GroupAdmin) bool {
+		return admin.UserId == user.ID
 	})
-
 	if idx < 0 {
-		errMsg := "user not found"
-		gc.res.Err = errors.New(errMsg)
+		uc.res.Err = ErrAdminNotFound
+		logrus.Error(uc.res.Err)
 		return
 	}
 
 	group.Admins = slices.Delete(group.Admins, idx, idx+1)
 
-	gc.groupRepo.Save(group)
-	gc.res.Err = nil
+	uc.groupRepo.Save(group)
+	uc.res.Err = nil
 }
 
 func NewDeleteAdminUseCase(

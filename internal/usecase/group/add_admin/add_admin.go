@@ -2,10 +2,19 @@ package add_admin
 
 import (
 	"errors"
+
 	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 	"golang.org/x/exp/slices"
+	"mashu.example/internal/entity"
 	"mashu.example/internal/usecase"
 	"mashu.example/internal/usecase/repository"
+)
+
+var (
+	ErrNotGroupOwnerOrAdmin = errors.New("only the group owner or admin can add admin")
+	ErrNotGroupMember       = errors.New("user is not the group member")
+	ErrIsAlreadyAdmin       = errors.New("the user is already admin")
 )
 
 type AddAdminUseCaseReq struct {
@@ -26,29 +35,46 @@ type AddAdminUseCase struct {
 	res *AddAdminUseCaseRes
 }
 
-func (gc *AddAdminUseCase) Execute() {
-	member, err := gc.userRepo.GetUserById(gc.req.memberId)
-	group, err := gc.groupRepo.GetGroupById(gc.req.groupId)
-	admin, err := gc.userRepo.GetUserById(gc.req.adminId)
+func (uc *AddAdminUseCase) Execute() {
+	_, err := uc.userRepo.GetUserById(uc.req.memberId)
+	group, err := uc.groupRepo.GetGroupById(uc.req.groupId)
+	_, err = uc.userRepo.GetUserById(uc.req.adminId)
 	if err != nil {
-		gc.res.Err = err
+		uc.res.Err = err
 		return
 	}
 
-	if !slices.Contains(group.Admins, admin.ID) && admin != group.Owner {
-		errMsg := "permission denied"
-		gc.res.Err = errors.New(errMsg)
+	// check whether `uc.req.adminId` is admin
+	isNotAdmin := (slices.IndexFunc(group.Admins, func(admin *entity.GroupAdmin) bool {
+		return admin.UserId == uc.req.adminId
+	}) == -1)
+	if uc.req.adminId != group.Owner.ID && isNotAdmin {
+		uc.res.Err = ErrNotGroupOwnerOrAdmin
+		logrus.Error(uc.res.Err)
 		return
 	}
 
-	if !slices.Contains(group.Members, member.ID) {
-		errMsg := "permission denied"
-		gc.res.Err = errors.New(errMsg)
+	// if `uc.req.memberId` is already admin
+	if slices.IndexFunc(group.Admins, func(admin *entity.GroupAdmin) bool {
+		return admin.UserId == uc.req.memberId
+	}) != -1 {
+		uc.res.Err = ErrIsAlreadyAdmin
+		logrus.Error(uc.res.Err)
 		return
 	}
-	group.AddAdmins(member.ID)
-	gc.groupRepo.Save(group)
-	gc.res.Err = nil
+
+	// check whether `uc.req.memberId` is member
+	if slices.IndexFunc(group.Members, func(mem *entity.GroupMember) bool {
+		return mem.UserId == uc.req.memberId
+	}) == -1 {
+		uc.res.Err = ErrNotGroupMember
+		logrus.Error(uc.res.Err)
+		return
+	}
+
+	group.AddAdmin(uc.req.memberId, uc.req.adminId)
+	uc.groupRepo.Save(group)
+	uc.res.Err = nil
 }
 
 func NewAddAdminUseCase(

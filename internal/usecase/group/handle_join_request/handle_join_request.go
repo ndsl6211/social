@@ -2,11 +2,16 @@ package handle_join_request
 
 import (
 	"errors"
+
 	"github.com/google/uuid"
-	"golang.org/x/exp/slices"
-	"mashu.example/internal/entity"
+	"github.com/sirupsen/logrus"
 	"mashu.example/internal/usecase"
 	"mashu.example/internal/usecase/repository"
+)
+
+var (
+	ErrApproverHasNoPermission = errors.New("the approver doesn't have permission")
+	ErrJoinRequestNotFound     = errors.New("the join request not found")
 )
 
 type HandleJoinRequestAction string
@@ -34,38 +39,44 @@ type HandleJoinRequestUseCase struct {
 	res       *HandleJoinRequestUseCaseRes
 }
 
-func (gc *HandleJoinRequestUseCase) Execute() {
-	requester, err := gc.userRepo.GetUserById(gc.req.requesterId)
-	group, err := gc.groupRepo.GetGroupById(gc.req.groupId)
-	approver, err := gc.userRepo.GetUserById(gc.req.approverId)
+func (uc *HandleJoinRequestUseCase) Execute() {
+	_, err := uc.userRepo.GetUserById(uc.req.requesterId)
 	if err != nil {
-		gc.res.Err = err
+		uc.res.Err = err
 		return
 	}
-	if !slices.Contains(group.Admins, approver.ID) && approver != group.Owner {
-		errMsg := "permission denied"
-		gc.res.Err = errors.New(errMsg)
+	group, err := uc.groupRepo.GetGroupById(uc.req.groupId)
+	if err != nil {
+		uc.res.Err = err
 		return
 	}
-
-	idx := slices.IndexFunc(group.JoinRequests, func(req *entity.JoinRequest) bool {
-		return req.Group == gc.req.groupId && req.Requester == gc.req.requesterId
-	})
-
-	if idx < 0 {
-		errMsg := "request not found"
-		gc.res.Err = errors.New(errMsg)
+	_, err = uc.userRepo.GetUserById(uc.req.approverId)
+	if err != nil {
+		uc.res.Err = err
 		return
 	}
 
-	if gc.req.action == ACCEPT_JOIN_REQUEST {
-		group.AddMembers(requester.ID)
+	if !group.IsAdmin(uc.req.approverId) && !group.IsOwner(uc.req.approverId) {
+		uc.res.Err = ErrApproverHasNoPermission
+		logrus.Error(uc.res.Err)
+		return
 	}
 
-	group.JoinRequests = slices.Delete(group.JoinRequests, idx, idx+1)
+	joinRequest := group.FindJoinRequest(uc.req.requesterId)
+	if joinRequest == nil {
+		uc.res.Err = ErrJoinRequestNotFound
+		logrus.Error(uc.res.Err)
+		return
+	}
 
-	gc.groupRepo.Save(group)
-	gc.res.Err = nil
+	if uc.req.action == ACCEPT_JOIN_REQUEST {
+		group.AddMember(uc.req.requesterId, uuid.Nil, uc.req.approverId)
+	}
+
+	group.RemoveJoinRequest(uc.req.requesterId)
+
+	uc.groupRepo.Save(group)
+	uc.res.Err = nil
 }
 
 func NewHandleJoinRequestUseCase(

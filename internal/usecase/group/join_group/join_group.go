@@ -2,8 +2,6 @@ package join_group
 
 import (
 	"github.com/google/uuid"
-	"mashu.example/internal/entity"
-	entity_enums "mashu.example/internal/entity/enums"
 	"mashu.example/internal/usecase"
 	"mashu.example/internal/usecase/repository"
 )
@@ -25,25 +23,22 @@ type JoinGroupUseCase struct {
 	Res *JoinGroupUseCaseRes
 }
 
-func (gc *JoinGroupUseCase) Execute() {
-	user, err := gc.userRepo.GetUserById(gc.Req.userId)
-	group, err := gc.groupRepo.GetGroupById(gc.Req.groupId)
+func (uc *JoinGroupUseCase) Execute() {
+	user, err := uc.userRepo.GetUserById(uc.Req.userId)
 	if err != nil {
-		gc.Res.Err = err
+		uc.Res.Err = err
+		return
+	}
+	group, err := uc.groupRepo.GetGroupById(uc.Req.groupId)
+	if err != nil {
+		uc.Res.Err = err
 		return
 	}
 
-	if group.Permission == entity_enums.GROUP_PUBLIC {
-		group.AddMembers(user.ID)
-	} else if group.Permission == group_permission.UNPUBLIC {
-		joinReq := &entity.JoinRequest{Group: group.ID, Requester: user.ID}
-		group.AddJoinRequests(joinReq)
-	} else {
-		return
-	}
+	group.AddJoinRequest(user.ID)
 
-	gc.groupRepo.Save(group)
-	gc.Res.Err = nil
+	uc.groupRepo.Save(group)
+	uc.Res.Err = nil
 }
 
 func NewJoinGroupUseCase(

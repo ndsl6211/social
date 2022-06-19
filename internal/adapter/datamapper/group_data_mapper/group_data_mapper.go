@@ -10,16 +10,16 @@ import (
 )
 
 type GroupDataMapper struct {
-	ID   uuid.UUID
-	Name string
+	ID   uuid.UUID `gorm:"primaryKey"`
+	Name string    `gorm:"column:name"`
 
 	OwnerId uuid.UUID
-	Owner   *user_data_mapper.UserDataMapper
+	Owner   *user_data_mapper.UserDataMapper `gorm:"foreighKey:OwnerId"`
 
-	Permission entity_enums.GroupPermission
+	Permission entity_enums.GroupPrivacy `gorm:"column:permission"`
 	Admins     []*user_data_mapper.UserDataMapper
-	CreatedAt  time.Time
 	Members    []JoinDataMapper
+	CreatedAt  time.Time
 }
 
 func (GroupDataMapper) TableName() string {

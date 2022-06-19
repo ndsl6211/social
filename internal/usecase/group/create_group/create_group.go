@@ -11,7 +11,7 @@ import (
 type CreateGroupUseCaseReq struct {
 	name       string
 	ownerId    uuid.UUID
-	permission entity_enums.GroupPermission
+	permission entity_enums.GroupPrivacy
 }
 
 type CreateGroupUseCaseRes struct {
@@ -51,7 +51,7 @@ func NewCreateGroupUseCase(
 func NewCreateGroupUseCaseReq(
 	name string,
 	ownerId uuid.UUID,
-	permission entity_enums.GroupPermission,
+	permission entity_enums.GroupPrivacy,
 ) *CreateGroupUseCaseReq {
 	return &CreateGroupUseCaseReq{name, ownerId, permission}
 }

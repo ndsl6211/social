@@ -10,24 +10,17 @@ import (
 	adapter_repository "mashu.example/internal/adapter/repository"
 	"mashu.example/internal/entity"
 	entity_enums "mashu.example/internal/entity/enums"
+	"mashu.example/internal/usecase/repository"
 	"mashu.example/internal/usecase/user/follow_user"
 	"mashu.example/pkg"
 )
 
-func main() {
-	logrus.SetLevel(logrus.DebugLevel)
-	sqlite := pkg.NewSqliteGormClient()
-	// redis := pkg.NewRedisClient()
-	userRepo := adapter_repository.NewUserRepository(sqlite)
-	postRepo := adapter_repository.NewPostRepository(sqlite)
-	chatRepo := adapter_repository.NewMemChatRepository()
-	// chatRepo := adapter_repository.NewRedisChatRepository(redis)
-
-	// create users
+// create users and have user1 follow user2
+func createUsers(userRepo repository.UserRepo) {
 	userId1 := uuid.MustParse("089b5667-85fe-4e9c-8990-1be35ca6f082")
 	userId2 := uuid.MustParse("e7b81c43-d9b6-4f0c-b349-88e321115cc5")
-	user1 := entity.NewUser(userId1, "mashu6211", "Mashu", "mashu@email.com", false)
-	user2 := entity.NewUser(userId2, "moonnight612", "Winnie", "moonnight612@email.com", true)
+	user1 = entity.NewUser(userId1, "mashu6211", "Mashu", "mashu@email.com", false)
+	user2 = entity.NewUser(userId2, "moonnight612", "Winnie", "moonnight612@email.com", true)
 	userRepo.Save(user1)
 	userRepo.Save(user2)
 
@@ -40,7 +33,9 @@ func main() {
 		fmt.Println(res.Err.Error())
 		return
 	}
+}
 
+func createPost() {
 	// create post with comment
 	postId := uuid.MustParse("11111111-0000-0000-0000-000000000000")
 	post := entity.NewPost(postId, "My First Post", "My first content", user1, entity_enums.POST_PUBLIC)
@@ -60,6 +55,31 @@ func main() {
 	})
 
 	postRepo.Save(post)
+}
+
+var (
+	user1 *entity.User
+	user2 *entity.User
+)
+
+var (
+	userRepo repository.UserRepo
+	postRepo repository.PostRepo
+	chatRepo repository.ChatRepo
+)
+
+func main() {
+	logrus.SetLevel(logrus.DebugLevel)
+
+	sqlite := pkg.NewSqliteGormClient()
+	userRepo = adapter_repository.NewUserRepository(sqlite)
+	postRepo = adapter_repository.NewPostRepository(sqlite)
+	chatRepo = adapter_repository.NewMemChatRepository()
+
+	// redis := pkg.NewRedisClient()
+	// chatRepo := adapter_repository.NewRedisChatRepository(redis)
+
+	createUsers(userRepo)
 
 	engine := pkg.NewGinEngine()
 	api.RegisterWebsocketApi(engine, userRepo, chatRepo)
