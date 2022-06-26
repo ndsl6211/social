@@ -1,10 +1,12 @@
 package api
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"mashu.example/internal/adapter/utils"
@@ -13,27 +15,48 @@ import (
 	"mashu.example/pkg"
 )
 
-type requestType string
+type wsRequestType string
+type wsResponseType string
+type wsMessageHandler func(uuid.UUID, map[string]string)
 
 const (
-	WS_CREATE_DM requestType = "CREATE_DM"
-	WS_SEND_MSG  requestType = "SEND_MSG"
+	WS_REQ_CREATE_DM wsRequestType = "CREATE_DM"
+	WS_REQ_SEND_MSG  wsRequestType = "SEND_MSG"
 )
 
-type websocketRequestMessage struct {
-	Type requestType `json:"type"`
-	// UserName string            `json:"userName"`
+const (
+	WS_RES_SEND_MSG wsResponseType = "SEND_MSG"
+
+	WS_RES_SUCCESS wsResponseType = "SUCCESS"
+	WS_RES_ERR     wsResponseType = "ERROR"
+)
+
+// struct for websocket request message
+type wsRequestMessage struct {
+	Type    wsRequestType     `json:"type"`
 	Payload map[string]string `json:"payload"`
 }
 
-type websocketErrorResponse struct {
-	ErrCode int    `json:"errCode"`
-	Message string `json:"message"`
+// struct for websocket response message
+type wsResponseMessage struct {
+	Code    int               `json:"code"`
+	Type    wsResponseType    `json:"type"`
+	Payload map[string]string `json:"payload"`
+}
+
+// create a websocket message response
+func newWsSuccessResponse(code int, message string) *wsResponseMessage {
+	return &wsResponseMessage{code, WS_RES_SUCCESS, map[string]string{"message": message}}
+}
+
+// create a websocket err response
+func newWsErrResponse(errCode int, message string) *wsResponseMessage {
+	return &wsResponseMessage{errCode, WS_RES_ERR, map[string]string{"err": message}}
 }
 
 type websocketHandler struct {
 	clients         map[uuid.UUID]*utils.WebSocketClient
-	wsMsgHandlerMap map[requestType]func(uuid.UUID, map[string]string)
+	wsMsgHandlerMap map[wsRequestType]wsMessageHandler
 
 	userRepo repository.UserRepo
 	chatRepo repository.ChatRepo
@@ -83,7 +106,7 @@ func (h *websocketHandler) handleConnection(c *gin.Context) {
 
 	// infinite loop to handle incoming connection
 	for {
-		var req websocketRequestMessage
+		var req wsRequestMessage
 		err := ws.ReadJSON(&req)
 		if err != nil {
 			msg := fmt.Sprintf("client %s disconnected", clientId)
@@ -105,21 +128,22 @@ func (h *websocketHandler) handleConnection(c *gin.Context) {
 func (h *websocketHandler) createDM(userId uuid.UUID, payload map[string]string) {
 	logrus.Info("start create DM")
 	client := h.clients[userId]
-	// jsonStr, err := json.Marshal(payload)
-	// if err != nil {
-	// 	errMsg := "failed to parse payload"
-	// 	logrus.Error(errMsg)
-	// 	client.Conn.WriteJSON(websocketErrorResponse{ErrCode: 400, Message: errMsg})
-	// 	return
-	// }
 
-	// req := &create_direct_message.CreateDirectMessageUseCaseReq{}
-	// if err := json.Unmarshal(jsonStr, req); err != nil {
-	// 	errMsg := "failed to parse payload into struct"
-	// 	logrus.Error(errMsg)
-	// 	client.Conn.WriteJSON(websocketErrorResponse{ErrCode: 400, Message: errMsg})
-	// 	return
-	// }
+	// payload validation
+	type createDMPayload struct {
+		TargetUserId string `json:"targetUserId" validate:"required"`
+	}
+	payloadByte, _ := json.Marshal(payload)
+	p := &createDMPayload{}
+	json.Unmarshal(payloadByte, p)
+	err := validator.New().Struct(p)
+	if err != nil {
+		client.Conn.WriteJSON(newWsErrResponse(
+			http.StatusBadRequest,
+			fmt.Sprintf("failed to parse payload: %s", err),
+		))
+		return
+	}
 
 	senderId := userId
 	receiverId := uuid.MustParse(payload["targetUserId"])
@@ -127,13 +151,6 @@ func (h *websocketHandler) createDM(userId uuid.UUID, payload map[string]string)
 		senderId,
 		receiverId,
 	)
-
-	if !req.Validate() {
-		errMsg := "bad request"
-		logrus.Error(errMsg)
-		client.Conn.WriteJSON(websocketErrorResponse{ErrCode: 400, Message: errMsg})
-		return
-	}
 
 	res := create_direct_message.NewCreateDirectMessageUseCaseRes()
 	uc := create_direct_message.NewCreateDirectMessageUseCase(
@@ -144,24 +161,72 @@ func (h *websocketHandler) createDM(userId uuid.UUID, payload map[string]string)
 	)
 	uc.Execute()
 	if res.Err != nil {
-		fmt.Println(res.Err.Error())
+		client.Conn.WriteJSON(newWsErrResponse(
+			http.StatusConflict,
+			res.Err.Error(),
+		))
 		return
 	}
 
-	dm, err := h.chatRepo.GetDMByUserId(senderId, receiverId)
-	if err != nil {
-		fmt.Println(err.Error())
-		client.Conn.WriteJSON("failed to get created DM")
-		return
-	}
-	fmt.Printf("chatroom got! %+v\n", dm)
+	client.Conn.WriteJSON(newWsSuccessResponse(
+		http.StatusCreated,
+		fmt.Sprintf("dm created, id: %s", res.DirectMessageId.String()),
+	))
 
-	client.Conn.WriteJSON("succeeded")
-	logrus.Info("end create DM")
+	logrus.Info("end of creating DM")
 }
 
 func (h *websocketHandler) sendMessage(userId uuid.UUID, payload map[string]string) {
-	fmt.Println("send message")
+	senderClient := h.clients[userId]
+
+	// payload validation
+	type sendMessagePayload struct {
+		TargetUserId string `json:"targetUserId" validate:"required"`
+		Content      string `json:"content" validate:"required"`
+	}
+	payloadByte, _ := json.Marshal(payload)
+	p := &sendMessagePayload{}
+	json.Unmarshal(payloadByte, p)
+	err := validator.New().Struct(p)
+	if err != nil {
+		senderClient.Conn.WriteJSON(newWsErrResponse(
+			http.StatusBadRequest,
+			fmt.Sprintf("failed to parse payload: %s", err)),
+		)
+		return
+	}
+
+	// get DM and add message
+	senderId := userId
+	receiverId, err := uuid.Parse(p.TargetUserId)
+	if err != nil {
+		senderClient.Conn.WriteJSON(newWsErrResponse(http.StatusBadRequest, "invalid user id"))
+		return
+	}
+	dm, err := h.chatRepo.GetDMByUserId(senderId, receiverId)
+	if err != nil {
+		senderClient.Conn.WriteJSON(newWsErrResponse(http.StatusNotFound, "no DM created"))
+		return
+	}
+	dm.AddMessage(senderId, p.Content)
+
+	// send message
+	senderClient.Conn.WriteJSON(&wsResponseMessage{
+		Code: http.StatusOK,
+		Type: WS_RES_SEND_MSG,
+		Payload: map[string]string{
+			"message": p.Content,
+		},
+	})
+	if receiverClient, ok := h.clients[receiverId]; ok {
+		receiverClient.Conn.WriteJSON(&wsResponseMessage{
+			Code: http.StatusOK,
+			Type: WS_RES_SEND_MSG,
+			Payload: map[string]string{
+				"message": p.Content,
+			},
+		})
+	}
 }
 
 func newWebSocketHandler(
@@ -170,13 +235,13 @@ func newWebSocketHandler(
 ) *websocketHandler {
 	h := &websocketHandler{
 		clients:         map[uuid.UUID]*utils.WebSocketClient{},
-		wsMsgHandlerMap: map[requestType]func(uuid.UUID, map[string]string){},
+		wsMsgHandlerMap: map[wsRequestType]wsMessageHandler{},
 		userRepo:        userRepo,
 		chatRepo:        chatRepo,
 	}
 
-	h.wsMsgHandlerMap[WS_CREATE_DM] = h.createDM
-	h.wsMsgHandlerMap[WS_SEND_MSG] = h.sendMessage
+	h.wsMsgHandlerMap[WS_REQ_CREATE_DM] = h.createDM
+	h.wsMsgHandlerMap[WS_REQ_SEND_MSG] = h.sendMessage
 
 	return h
 }

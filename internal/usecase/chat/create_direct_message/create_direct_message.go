@@ -21,14 +21,6 @@ type CreateDirectMessageUseCaseReq struct {
 	ReceiverId uuid.UUID
 }
 
-func (req CreateDirectMessageUseCaseReq) Validate() bool {
-	if (uuid.UUID{}) == req.SenderId || (uuid.UUID{}) == req.ReceiverId {
-		return false
-	}
-
-	return true
-}
-
 type CreateDirectMessageUseCaseRes struct {
 	DirectMessageId uuid.UUID
 	Err             error

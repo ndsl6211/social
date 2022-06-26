@@ -57,7 +57,7 @@ func (uc *SendMessageUseCase) Execute() {
 
 	dm.Messages = append(dm.Messages, chat.NewMessageWithTime(
 		uuid.New(),
-		sender,
+		sender.ID,
 		uc.req.message,
 		uc.req.timestamp,
 	))

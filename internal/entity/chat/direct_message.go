@@ -9,26 +9,26 @@ import (
 
 type Message struct {
 	ID        uuid.UUID
-	Owner     *entity.User
+	OwnerId   uuid.UUID
 	Content   string
 	Timestamp time.Time
 }
 
 func NewMessageWithTime(
 	id uuid.UUID,
-	owner *entity.User,
+	ownerId uuid.UUID,
 	content string,
 	time time.Time,
 ) *Message {
-	return &Message{id, owner, content, time}
+	return &Message{id, ownerId, content, time}
 }
 
 func NewMessage(
 	id uuid.UUID,
-	owner *entity.User,
+	ownerId uuid.UUID,
 	content string,
 ) *Message {
-	return &Message{id, owner, content, time.Now()}
+	return &Message{id, ownerId, content, time.Now()}
 }
 
 type DirectMessage struct {
@@ -37,6 +37,11 @@ type DirectMessage struct {
 	Receiver  *entity.User
 	Messages  []*Message
 	CreatedAt time.Time
+}
+
+func (dm *DirectMessage) AddMessage(senderId uuid.UUID, content string) {
+	messageId := uuid.New()
+	dm.Messages = append(dm.Messages, NewMessage(messageId, senderId, content))
 }
 
 func NewDirectMessage(
