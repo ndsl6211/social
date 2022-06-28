@@ -35,6 +35,18 @@ func (mct *memChatRepo) GetDMByUserId(userA uuid.UUID, userB uuid.UUID) (*chat.D
 	return &mct.directMessages[idx], nil
 }
 
+func (mct *memChatRepo) GetDMsByPartUserId(userId uuid.UUID) ([]*chat.DirectMessage, error) {
+	dms := []*chat.DirectMessage{}
+
+	for _, dm := range mct.directMessages {
+		if dm.Creator.ID == userId || dm.Receiver.ID == userId {
+			dms = append(dms, &dm)
+		}
+	}
+
+	return dms, nil
+}
+
 func (mct *memChatRepo) SaveDirectMessage(dm *chat.DirectMessage) error {
 	idx := slices.IndexFunc(mct.directMessages, func(d chat.DirectMessage) bool {
 		return d.ID == dm.ID

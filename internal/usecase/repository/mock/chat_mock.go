@@ -50,6 +50,21 @@ func (mr *MockChatRepoMockRecorder) GetDMByUserId(arg0, arg1 interface{}) *gomoc
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDMByUserId", reflect.TypeOf((*MockChatRepo)(nil).GetDMByUserId), arg0, arg1)
 }
 
+// GetDMsByPartUserId mocks base method.
+func (m *MockChatRepo) GetDMsByPartUserId(arg0 uuid.UUID) ([]*entity.DirectMessage, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetDMsByPartUserId", arg0)
+	ret0, _ := ret[0].([]*entity.DirectMessage)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetDMsByPartUserId indicates an expected call of GetDMsByPartUserId.
+func (mr *MockChatRepoMockRecorder) GetDMsByPartUserId(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDMsByPartUserId", reflect.TypeOf((*MockChatRepo)(nil).GetDMsByPartUserId), arg0)
+}
+
 // GetDirectMessage mocks base method.
 func (m *MockChatRepo) GetDirectMessage(arg0 uuid.UUID) (*entity.DirectMessage, error) {
 	m.ctrl.T.Helper()

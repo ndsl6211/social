@@ -1,4 +1,4 @@
-package send_message_test
+package chat_test
 
 import (
 	"fmt"
@@ -10,19 +10,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"mashu.example/internal/entity"
 	chat "mashu.example/internal/entity/chat"
-	"mashu.example/internal/usecase/chat/send_message"
-	"mashu.example/internal/usecase/repository/mock"
+	usecase "mashu.example/internal/usecase/chat/send_message"
+	"mashu.example/internal/usecase/tests"
 )
 
-func setup(t *testing.T) (*mock.MockUserRepo, *mock.MockChatRepo) {
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-
-	return mock.NewMockUserRepo(mockCtrl), mock.NewMockChatRepo(mockCtrl)
-}
-
 func TestSendMessage(t *testing.T) {
-	userRepo, chatRepo := setup(t)
+	userRepo, _, _, chatRepo := tests.SetupTestRepositories(t)
 
 	sender := entity.NewUser(uuid.New(), "sender", "Sender", "sender@email.com", true)
 	receiver := entity.NewUser(uuid.New(), "receiver", "Receiver", "receiver@email.com", true)
@@ -41,14 +34,14 @@ func TestSendMessage(t *testing.T) {
 		Do(func(arg *chat.DirectMessage) { updatedDM = arg })
 
 	now := time.Now()
-	req := send_message.NewSendMessageUseCaseReq(
+	req := usecase.NewSendMessageUseCaseReq(
 		sender.ID,
 		receiver.ID,
 		"Hi! How are you?",
 		now,
 	)
-	res := send_message.NewSendMessageUseCaseRes()
-	uc := send_message.NewSendMessageUseCase(userRepo, chatRepo, req, res)
+	res := usecase.NewSendMessageUseCaseRes()
+	uc := usecase.NewSendMessageUseCase(userRepo, chatRepo, req, res)
 
 	uc.Execute()
 

@@ -19,5 +19,6 @@ func (err *ErrDMNotFound) Error() string {
 type ChatRepo interface {
 	GetDirectMessage(dmId uuid.UUID) (*chat.DirectMessage, error)
 	GetDMByUserId(userA uuid.UUID, userB uuid.UUID) (*chat.DirectMessage, error)
+	GetDMsByPartUserId(userId uuid.UUID) ([]*chat.DirectMessage, error)
 	SaveDirectMessage(dm *chat.DirectMessage) error
 }

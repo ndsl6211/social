@@ -11,18 +11,22 @@ type redisChatRepo struct {
 	db *redis.Client
 }
 
-func (cr *redisChatRepo) GetDirectMessage(dmId uuid.UUID) (*chat.DirectMessage, error) {
+func (rcr *redisChatRepo) GetDirectMessage(dmId uuid.UUID) (*chat.DirectMessage, error) {
 	return nil, nil
 }
 
-func (cr *redisChatRepo) GetDMByUserId(
+func (rcr *redisChatRepo) GetDMByUserId(
 	userA uuid.UUID,
 	userB uuid.UUID,
 ) (*chat.DirectMessage, error) {
 	return nil, nil
 }
 
-func (cr *redisChatRepo) SaveDirectMessage(dm *chat.DirectMessage) error {
+func (rcr *redisChatRepo) GetDMsByPartUserId(userId uuid.UUID) ([]*chat.DirectMessage, error) {
+	return nil, nil
+}
+
+func (rcr *redisChatRepo) SaveDirectMessage(dm *chat.DirectMessage) error {
 	return nil
 }
 

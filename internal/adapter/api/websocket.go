@@ -20,8 +20,9 @@ type wsResponseType string
 type wsMessageHandler func(uuid.UUID, map[string]string)
 
 const (
-	WS_REQ_CREATE_DM wsRequestType = "CREATE_DM"
-	WS_REQ_SEND_MSG  wsRequestType = "SEND_MSG"
+	WS_REQ_CREATE_DM    wsRequestType = "CREATE_DM"
+	WS_REQ_SEND_MSG     wsRequestType = "SEND_MSG"
+	WS_REQ_LOAD_HISTORY wsRequestType = "LOAD_HISTORY"
 )
 
 const (

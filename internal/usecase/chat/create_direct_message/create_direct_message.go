@@ -1,4 +1,4 @@
-package create_direct_message
+package chat
 
 import (
 	"errors"
