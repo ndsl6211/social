@@ -1,4 +1,4 @@
-package delete_comment_test
+package comment_test
 
 import (
 	"testing"
@@ -8,19 +8,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"mashu.example/internal/entity"
 	entity_enums "mashu.example/internal/entity/enums"
-	"mashu.example/internal/usecase/comment/delete_comment"
-	"mashu.example/internal/usecase/repository/mock"
+	usecase "mashu.example/internal/usecase/comment/delete_comment"
+	"mashu.example/internal/usecase/tests"
 )
 
-func setup(t *testing.T) (*mock.MockPostRepo, *mock.MockUserRepo) {
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-
-	return mock.NewMockPostRepo(mockCtrl), mock.NewMockUserRepo(mockCtrl)
-}
-
 func TestDeleteComment(t *testing.T) {
-	postRepo, userRepo := setup(t)
+	userRepo, postRepo, _, _ := tests.SetupTestRepositories(t)
 
 	ownerId := uuid.New()
 	owner := entity.NewUser(ownerId, "owner", "owner display name", "owner@email.com", true)
@@ -42,9 +35,9 @@ func TestDeleteComment(t *testing.T) {
 		func(arg *entity.Post) { post = arg },
 	)
 
-	req := delete_comment.NewDeletePostUseCaseReq(ownerId, postId, commentId)
-	res := delete_comment.NewDeletePostUseCaseRes()
-	uc := delete_comment.NewDeletePoseUseCase(userRepo, postRepo, req, res)
+	req := usecase.NewDeletePostUseCaseReq(ownerId, postId, commentId)
+	res := usecase.NewDeletePostUseCaseRes()
+	uc := usecase.NewDeletePoseUseCase(userRepo, postRepo, req, res)
 
 	uc.Execute()
 
@@ -57,7 +50,7 @@ func TestDeleteComment(t *testing.T) {
 }
 
 func TestDeleteNotMyOwnComment(t *testing.T) {
-	postRepo, userRepo := setup(t)
+	userRepo, postRepo, _, _ := tests.SetupTestRepositories(t)
 
 	ownerId := uuid.New()
 	owner := entity.NewUser(ownerId, "owner", "owner display name", "owner@email.com", true)
@@ -79,9 +72,9 @@ func TestDeleteNotMyOwnComment(t *testing.T) {
 		func(arg *entity.Post) { post = arg },
 	)
 
-	req := delete_comment.NewDeletePostUseCaseReq(uuid.New(), postId, commentId)
-	res := delete_comment.NewDeletePostUseCaseRes()
-	uc := delete_comment.NewDeletePoseUseCase(userRepo, postRepo, req, res)
+	req := usecase.NewDeletePostUseCaseReq(uuid.New(), postId, commentId)
+	res := usecase.NewDeletePostUseCaseRes()
+	uc := usecase.NewDeletePoseUseCase(userRepo, postRepo, req, res)
 
 	uc.Execute()
 

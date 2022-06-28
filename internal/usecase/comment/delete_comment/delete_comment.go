@@ -1,4 +1,4 @@
-package delete_comment
+package comment
 
 import (
 	"errors"

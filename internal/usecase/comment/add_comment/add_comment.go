@@ -1,4 +1,4 @@
-package add_comment
+package comment
 
 import (
 	"errors"

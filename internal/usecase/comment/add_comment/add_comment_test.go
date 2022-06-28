@@ -1,4 +1,4 @@
-package add_comment_test
+package comment_test
 
 import (
 	"testing"
@@ -8,19 +8,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"mashu.example/internal/entity"
 	entity_enums "mashu.example/internal/entity/enums"
-	"mashu.example/internal/usecase/comment/add_comment"
-	"mashu.example/internal/usecase/repository/mock"
+	usecase "mashu.example/internal/usecase/comment/add_comment"
+	"mashu.example/internal/usecase/tests"
 )
 
-func setup(t *testing.T) (*mock.MockPostRepo, *mock.MockUserRepo) {
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-
-	return mock.NewMockPostRepo(mockCtrl), mock.NewMockUserRepo(mockCtrl)
-}
-
 func TestAddCommentUnderMyOwnPost(t *testing.T) {
-	postRepo, userRepo := setup(t)
+	userRepo, postRepo, _, _ := tests.SetupTestRepositories(t)
 
 	ownerId := uuid.New()
 	commentOwner := entity.NewUser(ownerId, "comment_owner", "comment owner display name", "comment_owner@email.com", true)
@@ -40,9 +33,9 @@ func TestAddCommentUnderMyOwnPost(t *testing.T) {
 		func(arg *entity.Post) { post = arg },
 	)
 
-	req := add_comment.NewAddCommentUseCaseReq(ownerId, postId, "Good!")
-	res := add_comment.NewAddCommentUseCaseRes()
-	uc := add_comment.NewAddCommentUseCase(userRepo, postRepo, req, res)
+	req := usecase.NewAddCommentUseCaseReq(ownerId, postId, "Good!")
+	res := usecase.NewAddCommentUseCaseRes()
+	uc := usecase.NewAddCommentUseCase(userRepo, postRepo, req, res)
 
 	uc.Execute()
 
@@ -57,7 +50,7 @@ func TestAddCommentUnderMyOwnPost(t *testing.T) {
 }
 
 func TestAddMultipleCommentUnderPost(t *testing.T) {
-	postRepo, userRepo := setup(t)
+	userRepo, postRepo, _, _ := tests.SetupTestRepositories(t)
 
 	commentOwner := entity.NewUser(uuid.New(), "comment_owner", "comment owner", "comment_owner@email.com", false)
 	postOwner := entity.NewUser(uuid.New(), "post_owner", "post owner", "post_owner@email.com", true)
@@ -70,9 +63,9 @@ func TestAddMultipleCommentUnderPost(t *testing.T) {
 		func(arg *entity.Post) { post = arg },
 	)
 
-	req := add_comment.NewAddCommentUseCaseReq(commentOwner.ID, post.ID, "good article!")
-	res := add_comment.NewAddCommentUseCaseRes()
-	uc := add_comment.NewAddCommentUseCase(userRepo, postRepo, req, res)
+	req := usecase.NewAddCommentUseCaseReq(commentOwner.ID, post.ID, "good article!")
+	res := usecase.NewAddCommentUseCaseRes()
+	uc := usecase.NewAddCommentUseCase(userRepo, postRepo, req, res)
 
 	uc.Execute()
 	assert.Nil(t, res.Err)
@@ -87,9 +80,9 @@ func TestAddMultipleCommentUnderPost(t *testing.T) {
 		func(arg *entity.Post) { post = arg },
 	)
 
-	req = add_comment.NewAddCommentUseCaseReq(postOwner.ID, post.ID, "thanks!")
-	res = add_comment.NewAddCommentUseCaseRes()
-	uc = add_comment.NewAddCommentUseCase(userRepo, postRepo, req, res)
+	req = usecase.NewAddCommentUseCaseReq(postOwner.ID, post.ID, "thanks!")
+	res = usecase.NewAddCommentUseCaseRes()
+	uc = usecase.NewAddCommentUseCase(userRepo, postRepo, req, res)
 
 	uc.Execute()
 	assert.Nil(t, res.Err)
@@ -99,7 +92,7 @@ func TestAddMultipleCommentUnderPost(t *testing.T) {
 }
 
 func TestAddCommentUnderPublicPost(t *testing.T) {
-	postRepo, userRepo := setup(t)
+	userRepo, postRepo, _, _ := tests.SetupTestRepositories(t)
 
 	commentOwner := entity.NewUser(uuid.New(), "comment_owner", "comment owner", "comment_owner@email.com", false)
 	postOwner := entity.NewUser(uuid.New(), "post_owner", "post owner", "post_owner@email.com", false)
@@ -111,9 +104,9 @@ func TestAddCommentUnderPublicPost(t *testing.T) {
 		func(arg *entity.Post) { post = arg },
 	)
 
-	req := add_comment.NewAddCommentUseCaseReq(commentOwner.ID, post.ID, "good article!")
-	res := add_comment.NewAddCommentUseCaseRes()
-	uc := add_comment.NewAddCommentUseCase(userRepo, postRepo, req, res)
+	req := usecase.NewAddCommentUseCaseReq(commentOwner.ID, post.ID, "good article!")
+	res := usecase.NewAddCommentUseCaseRes()
+	uc := usecase.NewAddCommentUseCase(userRepo, postRepo, req, res)
 
 	uc.Execute()
 	assert.Nil(t, res.Err)
@@ -123,7 +116,7 @@ func TestAddCommentUnderPublicPost(t *testing.T) {
 }
 
 func TestAddCommentUnderFollowerOnlyPostWithoutFollow(t *testing.T) {
-	postRepo, userRepo := setup(t)
+	userRepo, postRepo, _, _ := tests.SetupTestRepositories(t)
 
 	commentOwner := entity.NewUser(uuid.New(), "comment_owner", "comment owner", "comment_owner@email.com", false)
 	postOwner := entity.NewUser(uuid.New(), "post_owner", "post owner", "post_owner@email.com", false)
@@ -133,9 +126,9 @@ func TestAddCommentUnderFollowerOnlyPostWithoutFollow(t *testing.T) {
 	userRepo.EXPECT().GetUserById(commentOwner.ID).Return(commentOwner, nil)
 	postRepo.EXPECT().GetPostById(post.ID).Return(post, nil)
 
-	req := add_comment.NewAddCommentUseCaseReq(commentOwner.ID, post.ID, "good article!")
-	res := add_comment.NewAddCommentUseCaseRes()
-	uc := add_comment.NewAddCommentUseCase(userRepo, postRepo, req, res)
+	req := usecase.NewAddCommentUseCaseReq(commentOwner.ID, post.ID, "good article!")
+	res := usecase.NewAddCommentUseCaseRes()
+	uc := usecase.NewAddCommentUseCase(userRepo, postRepo, req, res)
 
 	uc.Execute()
 	assert.Error(t, res.Err)
@@ -143,7 +136,7 @@ func TestAddCommentUnderFollowerOnlyPostWithoutFollow(t *testing.T) {
 }
 
 func TestAddCommentUnderFollowerOnlyPostWithFollow(t *testing.T) {
-	postRepo, userRepo := setup(t)
+	userRepo, postRepo, _, _ := tests.SetupTestRepositories(t)
 
 	commentOwner := entity.NewUser(uuid.New(), "comment_owner", "comment owner", "comment_owner@email.com", false)
 	postOwner := entity.NewUser(uuid.New(), "post_owner", "post owner", "post_owner@email.com", false)
@@ -159,9 +152,9 @@ func TestAddCommentUnderFollowerOnlyPostWithFollow(t *testing.T) {
 		func(arg *entity.Post) { post = arg },
 	)
 
-	req := add_comment.NewAddCommentUseCaseReq(commentOwner.ID, post.ID, "good article!")
-	res := add_comment.NewAddCommentUseCaseRes()
-	uc := add_comment.NewAddCommentUseCase(userRepo, postRepo, req, res)
+	req := usecase.NewAddCommentUseCaseReq(commentOwner.ID, post.ID, "good article!")
+	res := usecase.NewAddCommentUseCaseRes()
+	uc := usecase.NewAddCommentUseCase(userRepo, postRepo, req, res)
 
 	uc.Execute()
 	assert.Nil(t, res.Err)
@@ -171,7 +164,7 @@ func TestAddCommentUnderFollowerOnlyPostWithFollow(t *testing.T) {
 }
 
 func TestAddCommentUnderPrivatePost(t *testing.T) {
-	postRepo, userRepo := setup(t)
+	userRepo, postRepo, _, _ := tests.SetupTestRepositories(t)
 
 	commentOwner := entity.NewUser(uuid.New(), "comment_owner", "comment owner", "comment_owner@email.com", false)
 	postOwner := entity.NewUser(uuid.New(), "post_owner", "post owner", "post_owner@email.com", false)
@@ -184,9 +177,9 @@ func TestAddCommentUnderPrivatePost(t *testing.T) {
 	userRepo.EXPECT().GetUserById(commentOwner.ID).Return(commentOwner, nil)
 	postRepo.EXPECT().GetPostById(post.ID).Return(post, nil)
 
-	req := add_comment.NewAddCommentUseCaseReq(commentOwner.ID, post.ID, "good article!")
-	res := add_comment.NewAddCommentUseCaseRes()
-	uc := add_comment.NewAddCommentUseCase(userRepo, postRepo, req, res)
+	req := usecase.NewAddCommentUseCaseReq(commentOwner.ID, post.ID, "good article!")
+	res := usecase.NewAddCommentUseCaseRes()
+	uc := usecase.NewAddCommentUseCase(userRepo, postRepo, req, res)
 
 	uc.Execute()
 	assert.Error(t, res.Err)
