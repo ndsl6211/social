@@ -1,4 +1,4 @@
-package chat
+package send_message
 
 import (
 	"errors"

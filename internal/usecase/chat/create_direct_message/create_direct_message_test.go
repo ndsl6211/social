@@ -1,4 +1,4 @@
-package chat_test
+package create_direct_message_test
 
 import (
 	"fmt"

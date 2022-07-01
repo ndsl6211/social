@@ -1,4 +1,4 @@
-package chat
+package load_message_history
 
 import (
 	"time"
@@ -32,7 +32,7 @@ type LoadMessageHistoryUseCaseReq struct {
 }
 
 type LoadMessageHistoryUseCaseRes struct {
-	messageMap map[string][]MessageDTO // map the dm id to a list of message
+	MessageMap map[string][]MessageDTO // map the dm id to a list of message
 	Err        error
 }
 
@@ -63,7 +63,7 @@ func (uc *LoadMessageHistoryUseCase) Execute() {
 		for _, msg := range dm.Messages {
 			msgDTOs = append(msgDTOs, NewMessageDTO(*msg))
 		}
-		uc.res.messageMap[dm.ID.String()] = msgDTOs
+		uc.res.MessageMap[dm.ID.String()] = msgDTOs
 	}
 
 	uc.res.Err = nil
@@ -86,6 +86,6 @@ func NewLoadMessageHistoryUseCaseReq(
 
 func NewLoadMessageHistoryUseCaseRes() *LoadMessageHistoryUseCaseRes {
 	return &LoadMessageHistoryUseCaseRes{
-		messageMap: map[string][]MessageDTO{},
+		MessageMap: map[string][]MessageDTO{},
 	}
 }
