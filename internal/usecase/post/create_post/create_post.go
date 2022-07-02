@@ -12,8 +12,9 @@ import (
 )
 
 var (
-	ErrOwnerNotFound = errors.New("owner not found")
-	ErrGroupNotFound = errors.New("group not found")
+	ErrOwnerNotFound         = errors.New("owner not found")
+	ErrGroupNotFound         = errors.New("group not found")
+	ErrInvalidPostPermission = errors.New("group post should be public")
 )
 
 type CreatePostUseCaseReq struct {
@@ -55,6 +56,11 @@ func (uc *CreatePostUseCase) Execute() {
 	}
 
 	post := entity.NewPost(uuid.New(), uc.req.title, uc.req.content, owner, group, uc.req.permission)
+	if post == nil {
+		uc.res.Err = ErrInvalidPostPermission
+		logrus.Error(uc.res.Err)
+		return
+	}
 	uc.postRepo.Save(post)
 
 	uc.res.Err = nil

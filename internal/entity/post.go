@@ -50,6 +50,13 @@ func NewPost(
 	group *Group,
 	permission entity_enums.PostPermission,
 ) *Post {
+	// for post in group, the permission can only be public
+	if group != nil {
+		if permission == entity_enums.POST_FOLLOWER_ONLY || permission == entity_enums.POST_PRIVATE {
+			return nil
+		}
+	}
+
 	return &Post{
 		ID:         id,
 		Title:      title,

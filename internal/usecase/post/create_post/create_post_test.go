@@ -125,3 +125,27 @@ func TestCreatePostInNonExistentGroup(t *testing.T) {
 
 	assert.ErrorIs(t, res.Err, create_post.ErrGroupNotFound)
 }
+
+func TestCreatePostInGroupWithInvalidPermission(t *testing.T) {
+	userRepo, postRepo, groupRepo, _ := tests.SetupTestRepositories(t)
+
+	owner := entity.NewUser(uuid.New(), "owner", "Owner", "owner@email.com", false)
+	group := entity.NewGroup(uuid.New(), "group", owner, entity_enums.GROUP_PUBLIC)
+
+	userRepo.EXPECT().GetUserById(owner.ID).Return(owner, nil)
+	groupRepo.EXPECT().GetGroupById(group.ID).Return(group, nil)
+
+	req := create_post.NewCreatePostUseCaseReq(
+		"Hi, Golang",
+		"Hello world!\nHello Clean Architecture!\nHello Domain Driven Design!",
+		owner.ID,
+		group.ID,
+		entity_enums.POST_PRIVATE,
+	)
+	res := create_post.NewCreatePostUseCaseRes()
+	uc := create_post.NewCreatePostUseCase(userRepo, postRepo, groupRepo, req, res)
+
+	uc.Execute()
+
+	assert.ErrorIs(t, res.Err, create_post.ErrInvalidPostPermission)
+}
