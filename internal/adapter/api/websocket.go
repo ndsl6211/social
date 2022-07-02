@@ -9,15 +9,18 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
+	"mashu.example/internal/adapter/presenter"
 	"mashu.example/internal/adapter/utils"
 	"mashu.example/internal/usecase/chat/create_direct_message"
+	"mashu.example/internal/usecase/chat/load_message_history"
 	"mashu.example/internal/usecase/repository"
 	"mashu.example/pkg"
 )
 
 type wsRequestType string
 type wsResponseType string
-type wsMessageHandler func(uuid.UUID, map[string]string)
+type wsMsgPayload map[string]interface{}
+type wsMessageHandler func(uuid.UUID, wsMsgPayload)
 
 const (
 	WS_REQ_CREATE_DM    wsRequestType = "CREATE_DM"
@@ -26,7 +29,8 @@ const (
 )
 
 const (
-	WS_RES_SEND_MSG wsResponseType = "SEND_MSG"
+	WS_RES_SEND_MSG     wsResponseType = "SEND_MSG"
+	WS_RES_LOAD_HISTORY wsResponseType = "LOAD_HISTORY"
 
 	WS_RES_SUCCESS wsResponseType = "SUCCESS"
 	WS_RES_ERR     wsResponseType = "ERROR"
@@ -34,25 +38,25 @@ const (
 
 // struct for websocket request message
 type wsRequestMessage struct {
-	Type    wsRequestType     `json:"type"`
-	Payload map[string]string `json:"payload"`
+	Type    wsRequestType `json:"type"`
+	Payload wsMsgPayload  `json:"payload"`
 }
 
 // struct for websocket response message
 type wsResponseMessage struct {
-	Code    int               `json:"code"`
-	Type    wsResponseType    `json:"type"`
-	Payload map[string]string `json:"payload"`
+	Code    int            `json:"code"`
+	Type    wsResponseType `json:"type"`
+	Payload wsMsgPayload   `json:"payload"`
 }
 
 // create a websocket message response
 func newWsSuccessResponse(code int, message string) *wsResponseMessage {
-	return &wsResponseMessage{code, WS_RES_SUCCESS, map[string]string{"message": message}}
+	return &wsResponseMessage{code, WS_RES_SUCCESS, wsMsgPayload{"message": message}}
 }
 
 // create a websocket err response
 func newWsErrResponse(errCode int, message string) *wsResponseMessage {
-	return &wsResponseMessage{errCode, WS_RES_ERR, map[string]string{"err": message}}
+	return &wsResponseMessage{errCode, WS_RES_ERR, wsMsgPayload{"err": message}}
 }
 
 type websocketHandler struct {
@@ -126,7 +130,7 @@ func (h *websocketHandler) handleConnection(c *gin.Context) {
 	}
 }
 
-func (h *websocketHandler) createDM(userId uuid.UUID, payload map[string]string) {
+func (h *websocketHandler) createDM(userId uuid.UUID, payload wsMsgPayload) {
 	logrus.Info("start create DM")
 	client := h.clients[userId]
 
@@ -147,7 +151,7 @@ func (h *websocketHandler) createDM(userId uuid.UUID, payload map[string]string)
 	}
 
 	senderId := userId
-	receiverId := uuid.MustParse(payload["targetUserId"])
+	receiverId := uuid.MustParse(payload["targetUserId"].(string))
 	req := create_direct_message.NewCreateDirectMessageUseCaseReq(
 		senderId,
 		receiverId,
@@ -177,7 +181,7 @@ func (h *websocketHandler) createDM(userId uuid.UUID, payload map[string]string)
 	logrus.Info("end of creating DM")
 }
 
-func (h *websocketHandler) sendMessage(userId uuid.UUID, payload map[string]string) {
+func (h *websocketHandler) sendMessage(userId uuid.UUID, payload wsMsgPayload) {
 	senderClient := h.clients[userId]
 
 	// payload validation
@@ -215,7 +219,7 @@ func (h *websocketHandler) sendMessage(userId uuid.UUID, payload map[string]stri
 	senderClient.Conn.WriteJSON(&wsResponseMessage{
 		Code: http.StatusOK,
 		Type: WS_RES_SEND_MSG,
-		Payload: map[string]string{
+		Payload: wsMsgPayload{
 			"message": p.Content,
 		},
 	})
@@ -223,11 +227,40 @@ func (h *websocketHandler) sendMessage(userId uuid.UUID, payload map[string]stri
 		receiverClient.Conn.WriteJSON(&wsResponseMessage{
 			Code: http.StatusOK,
 			Type: WS_RES_SEND_MSG,
-			Payload: map[string]string{
+			Payload: wsMsgPayload{
 				"message": p.Content,
 			},
 		})
 	}
+}
+
+func (h *websocketHandler) loadMessageHistory(userId uuid.UUID, payload wsMsgPayload) {
+	fmt.Println("start load history")
+	userClient := h.clients[userId]
+
+	req := load_message_history.NewLoadMessageHistoryUseCaseReq(userId)
+	res := load_message_history.NewLoadMessageHistoryUseCaseRes()
+	uc := load_message_history.NewLoadMessageHistoryUseCase(h.userRepo, h.chatRepo, req, res)
+
+	uc.Execute()
+	if res.Err != nil {
+		userClient.Conn.WriteJSON(newWsErrResponse(
+			http.StatusInternalServerError,
+			res.Err.Error(),
+		))
+		return
+	}
+
+	p := presenter.NewMessageHistoryPresenter(res)
+	vm := p.BuildViewModel()
+
+	userClient.Conn.WriteJSON(&wsResponseMessage{
+		Code: http.StatusOK,
+		Type: WS_RES_LOAD_HISTORY,
+		Payload: wsMsgPayload{
+			"history": vm,
+		},
+	})
 }
 
 func newWebSocketHandler(
@@ -243,6 +276,7 @@ func newWebSocketHandler(
 
 	h.wsMsgHandlerMap[WS_REQ_CREATE_DM] = h.createDM
 	h.wsMsgHandlerMap[WS_REQ_SEND_MSG] = h.sendMessage
+	h.wsMsgHandlerMap[WS_REQ_LOAD_HISTORY] = h.loadMessageHistory
 
 	return h
 }

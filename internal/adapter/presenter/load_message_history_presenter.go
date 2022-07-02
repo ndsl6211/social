@@ -6,10 +6,15 @@ type MessageHistoryPresenter struct {
 	res *uc.LoadMessageHistoryUseCaseRes
 }
 
-type MessageHistoryViewModel struct{}
+type MessageHistoryViewModel struct {
+	Messages map[string][]uc.MessageDTO
+}
 
 func (mhp *MessageHistoryPresenter) BuildViewModel() MessageHistoryViewModel {
-	return MessageHistoryViewModel{}
+	mhvm := MessageHistoryViewModel{}
+	mhvm.Messages = mhp.res.MessageMap
+
+	return mhvm
 }
 
 // constructor of message history presenter
