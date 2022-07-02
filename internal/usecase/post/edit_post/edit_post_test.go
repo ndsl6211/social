@@ -34,6 +34,7 @@ func TestEditPost(t *testing.T) {
 			Email:       "owner@email.com",
 			Public:      true,
 		},
+		nil,
 		entity_enums.POST_PUBLIC,
 	)
 
@@ -74,6 +75,7 @@ func TestEditNotMyOwnPost(t *testing.T) {
 			Email:       "owner@email.com",
 			Public:      true,
 		},
+		nil,
 		entity_enums.POST_PUBLIC,
 	)
 

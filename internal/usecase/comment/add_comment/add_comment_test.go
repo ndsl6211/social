@@ -24,6 +24,7 @@ func TestAddCommentUnderMyOwnPost(t *testing.T) {
 		"My First Post",
 		"My first content",
 		commentOwner,
+		nil,
 		entity_enums.POST_PUBLIC,
 	)
 
@@ -54,7 +55,7 @@ func TestAddMultipleCommentUnderPost(t *testing.T) {
 
 	commentOwner := entity.NewUser(uuid.New(), "comment_owner", "comment owner", "comment_owner@email.com", false)
 	postOwner := entity.NewUser(uuid.New(), "post_owner", "post owner", "post_owner@email.com", true)
-	post := entity.NewPost(uuid.New(), "Learning Domain Driven Design", "...", postOwner, entity_enums.POST_PUBLIC)
+	post := entity.NewPost(uuid.New(), "Learning Domain Driven Design", "...", postOwner, nil, entity_enums.POST_PUBLIC)
 
 	// first comment
 	userRepo.EXPECT().GetUserById(commentOwner.ID).Return(commentOwner, nil)
@@ -96,7 +97,7 @@ func TestAddCommentUnderPublicPost(t *testing.T) {
 
 	commentOwner := entity.NewUser(uuid.New(), "comment_owner", "comment owner", "comment_owner@email.com", false)
 	postOwner := entity.NewUser(uuid.New(), "post_owner", "post owner", "post_owner@email.com", false)
-	post := entity.NewPost(uuid.New(), "Learning Domain Driven Design", "...", postOwner, entity_enums.POST_PUBLIC)
+	post := entity.NewPost(uuid.New(), "Learning Domain Driven Design", "...", postOwner, nil, entity_enums.POST_PUBLIC)
 
 	userRepo.EXPECT().GetUserById(commentOwner.ID).Return(commentOwner, nil)
 	postRepo.EXPECT().GetPostById(post.ID).Return(post, nil)
@@ -121,7 +122,7 @@ func TestAddCommentUnderFollowerOnlyPostWithoutFollow(t *testing.T) {
 	commentOwner := entity.NewUser(uuid.New(), "comment_owner", "comment owner", "comment_owner@email.com", false)
 	postOwner := entity.NewUser(uuid.New(), "post_owner", "post owner", "post_owner@email.com", false)
 
-	post := entity.NewPost(uuid.New(), "Learning Domain Driven Design", "...", postOwner, entity_enums.POST_FOLLOWER_ONLY)
+	post := entity.NewPost(uuid.New(), "Learning Domain Driven Design", "...", postOwner, nil, entity_enums.POST_FOLLOWER_ONLY)
 
 	userRepo.EXPECT().GetUserById(commentOwner.ID).Return(commentOwner, nil)
 	postRepo.EXPECT().GetPostById(post.ID).Return(post, nil)
@@ -144,7 +145,7 @@ func TestAddCommentUnderFollowerOnlyPostWithFollow(t *testing.T) {
 	// comment owner follow post owner
 	postOwner.Followers = append(postOwner.Followers, commentOwner.ID)
 
-	post := entity.NewPost(uuid.New(), "Learning Domain Driven Design", "...", postOwner, entity_enums.POST_FOLLOWER_ONLY)
+	post := entity.NewPost(uuid.New(), "Learning Domain Driven Design", "...", postOwner, nil, entity_enums.POST_FOLLOWER_ONLY)
 
 	userRepo.EXPECT().GetUserById(commentOwner.ID).Return(commentOwner, nil)
 	postRepo.EXPECT().GetPostById(post.ID).Return(post, nil)
@@ -172,7 +173,7 @@ func TestAddCommentUnderPrivatePost(t *testing.T) {
 	// comment owner follow post owner
 	postOwner.Followers = append(postOwner.Followers, commentOwner.ID)
 
-	post := entity.NewPost(uuid.New(), "Learning Domain Driven Design", "...", postOwner, entity_enums.POST_PRIVATE)
+	post := entity.NewPost(uuid.New(), "Learning Domain Driven Design", "...", postOwner, nil, entity_enums.POST_PRIVATE)
 
 	userRepo.EXPECT().GetUserById(commentOwner.ID).Return(commentOwner, nil)
 	postRepo.EXPECT().GetPostById(post.ID).Return(post, nil)

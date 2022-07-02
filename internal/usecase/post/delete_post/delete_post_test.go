@@ -36,6 +36,7 @@ func TestDeletePost(t *testing.T) {
 			Email:       "owner@email.com",
 			Public:      true,
 		},
+		nil,
 		entity_enums.POST_PUBLIC,
 	)
 
@@ -88,6 +89,7 @@ func TestDeleteNotMyPost(t *testing.T) {
 			Email:       "owner@email.com",
 			Public:      true,
 		},
+		nil,
 		entity_enums.POST_PUBLIC,
 	)
 

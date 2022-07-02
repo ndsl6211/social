@@ -25,6 +25,7 @@ type Post struct {
 	Title      string
 	Content    string
 	Owner      *User
+	group      *Group // nil if not belonging to any group, readonly field
 	Permission entity_enums.PostPermission
 
 	Comments []*Comment
@@ -37,8 +38,8 @@ func (p *Post) Inspect() {
 	fmt.Printf("%+v\n", p)
 }
 
-func (p *Post) SetOwner(u *User) {
-	p.Owner = u
+func (p *Post) Group() *Group {
+	return p.group
 }
 
 func NewPost(
@@ -46,6 +47,7 @@ func NewPost(
 	title string,
 	content string,
 	owner *User,
+	group *Group,
 	permission entity_enums.PostPermission,
 ) *Post {
 	return &Post{
@@ -53,6 +55,7 @@ func NewPost(
 		Title:      title,
 		Content:    content,
 		Owner:      owner,
+		group:      group,
 		Permission: permission,
 		Comments:   []*Comment{},
 		CreatedAt:  time.Now(),

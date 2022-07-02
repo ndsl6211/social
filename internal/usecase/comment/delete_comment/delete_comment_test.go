@@ -24,6 +24,7 @@ func TestDeleteComment(t *testing.T) {
 		"My First Post",
 		"My first content",
 		entity.NewUser(ownerId, "post_owner", "owner display name", "owner@email.com", true),
+		nil,
 		entity_enums.POST_PUBLIC,
 	)
 	commentId := uuid.New()
@@ -61,6 +62,7 @@ func TestDeleteNotMyOwnComment(t *testing.T) {
 		"My First Post",
 		"My first content",
 		entity.NewUser(ownerId, "post_owner", "owner display name", "owner@email.com", true),
+		nil,
 		entity_enums.POST_PUBLIC,
 	)
 	commentId := uuid.New()

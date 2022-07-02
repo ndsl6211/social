@@ -38,7 +38,7 @@ func createUsers(userRepo repository.UserRepo) {
 func createPost() {
 	// create post with comment
 	postId := uuid.MustParse("11111111-0000-0000-0000-000000000000")
-	post := entity.NewPost(postId, "My First Post", "My first content", user1, entity_enums.POST_PUBLIC)
+	post := entity.NewPost(postId, "My First Post", "My first content", user1, nil, entity_enums.POST_PUBLIC)
 	post.Comments = append(post.Comments, &entity.Comment{
 		ID:        uuid.New(),
 		Owner:     user1,

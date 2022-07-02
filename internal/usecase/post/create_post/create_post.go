@@ -34,7 +34,7 @@ func (uc *CreatePostUseCase) Execute() {
 		return
 	}
 
-	post := entity.NewPost(uuid.New(), uc.req.title, uc.req.content, owner, uc.req.permission)
+	post := entity.NewPost(uuid.New(), uc.req.title, uc.req.content, owner, nil, uc.req.permission)
 	uc.postRepo.Save(post)
 
 	uc.res.Err = nil
