@@ -61,12 +61,6 @@ func (ur *userRepo) GetUserByUserName(username string) (*entity.User, error) {
 }
 
 func (ur *userRepo) Save(user *entity.User) error {
-	// save user
-	userDataMapper := user_data_mapper.NewUserDataMapper(user)
-	if err := ur.db.Save(userDataMapper).Error; err != nil {
-		return err
-	}
-
 	// build follow status
 	var followDataMappers []*user_data_mapper.FollowDataMapper
 
@@ -97,9 +91,21 @@ func (ur *userRepo) Save(user *entity.User) error {
 		))
 	}
 
-	if err := ur.db.Save(followDataMappers).Error; err != nil {
-		return err
-	}
+	// save user
+	userDataMapper := user_data_mapper.NewUserDataMapper(user)
+	ur.db.Transaction(func(tx *gorm.DB) error {
+		if err := ur.db.Save(userDataMapper).Error; err != nil {
+			return err
+		}
+
+		if len(followDataMappers) != 0 {
+			if err := ur.db.Save(followDataMappers).Error; err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
 
 	return nil
 }

@@ -22,7 +22,9 @@ func createUsers(userRepo repository.UserRepo) {
 	user1 = entity.NewUser(userId1, "mashu6211", "Mashu", "mashu@email.com", false)
 	user2 = entity.NewUser(userId2, "moonnight612", "Winnie", "moonnight612@email.com", true)
 	userRepo.Save(user1)
+	logrus.Infof("[DATA PRELOAD] user %s created", user1.UserName)
 	userRepo.Save(user2)
+	logrus.Infof("[DATA PRELOAD] user %s created", user2.UserName)
 
 	// have user1 follow user2
 	req := follow_user.NewFollowUserUseCaseReq(user1.ID, user2.ID)
@@ -33,6 +35,7 @@ func createUsers(userRepo repository.UserRepo) {
 		fmt.Println(res.Err.Error())
 		return
 	}
+	logrus.Infof("have %s to follow %s", user1.UserName, user2.UserName)
 }
 
 func createPost() {
