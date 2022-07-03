@@ -3,9 +3,12 @@ package api
 import "github.com/gin-gonic/gin"
 
 func registerPostApis(e *gin.Engine, h *restApiHandler) {
-	e.POST("/post", h.createPost)
-	e.PUT("/post", h.editPost)
-	e.DELETE("/post", h.deletePost)
+	post := e.Group("/post")
+	{
+		post.POST("", h.createPost)
+		post.PUT("", h.editPost)
+		post.DELETE("", h.deletePost)
+	}
 }
 
 func (h *restApiHandler) createPost(ctx *gin.Context) {
