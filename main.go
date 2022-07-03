@@ -63,9 +63,10 @@ var (
 )
 
 var (
-	userRepo repository.UserRepo
-	postRepo repository.PostRepo
-	chatRepo repository.ChatRepo
+	userRepo  repository.UserRepo
+	postRepo  repository.PostRepo
+	groupRepo repository.GroupRepo
+	chatRepo  repository.ChatRepo
 )
 
 func main() {
@@ -74,6 +75,7 @@ func main() {
 	sqlite := pkg.NewSqliteGormClient()
 	userRepo = adapter_repository.NewUserRepository(sqlite)
 	postRepo = adapter_repository.NewPostRepository(sqlite)
+	groupRepo = adapter_repository.NewGroupRepository(sqlite)
 	chatRepo = adapter_repository.NewMemChatRepository()
 
 	// redis := pkg.NewRedisClient()
@@ -83,6 +85,7 @@ func main() {
 
 	engine := pkg.NewGinEngine()
 	api.RegisterWebsocketApi(engine, userRepo, chatRepo)
+	api.RegisterRestfulApis(engine, userRepo, postRepo, groupRepo)
 
 	engine.Run(":11000")
 }
