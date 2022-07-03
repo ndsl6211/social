@@ -42,11 +42,15 @@ func (h *restApiHandler) register(ctx *gin.Context) {
 }
 
 func (h *restApiHandler) login(ctx *gin.Context) {
-	req := &login.LoginUseCaseReq{}
-	if err := ctx.ShouldBindJSON(req); err != nil {
+	type loginPayload struct {
+		Username string `json:"username" binding:"required"`
+	}
+	p := &loginPayload{}
+	if err := ctx.ShouldBindJSON(p); err != nil {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, newRestErrResponse(err.Error()))
 		return
 	}
+	req := login.NewLoginUseCaseReq(p.Username)
 	res := login.NewLoginUseCaseRes()
 	uc := login.NewLoginUseCase(h.userRepo, req, res)
 	uc.Execute()
