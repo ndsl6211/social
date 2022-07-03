@@ -5,6 +5,10 @@ import (
 	"mashu.example/internal/usecase/repository"
 )
 
+func newRestErrResponse(message string) map[string]string {
+	return map[string]string{"error": message}
+}
+
 type restApiHandler struct {
 	userRepo  repository.UserRepo
 	postRepo  repository.PostRepo
@@ -21,6 +25,7 @@ func RegisterRestfulApis(
 
 	registerGroupApis(e, h)
 	registerPostApis(e, h)
+	registerUserApis(e, h)
 }
 
 func newRestApiHandler(
