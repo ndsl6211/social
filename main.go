@@ -6,7 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
-	"mashu.example/internal/adapter/api"
+	"mashu.example/internal/adapter/chatbot/discord"
 	adapter_repository "mashu.example/internal/adapter/repository"
 	"mashu.example/internal/entity"
 	entity_enums "mashu.example/internal/entity/enums"
@@ -35,7 +35,7 @@ func createUsers(userRepo repository.UserRepo) {
 		fmt.Println(res.Err.Error())
 		return
 	}
-	logrus.Infof("have %s to follow %s", user1.UserName, user2.UserName)
+	logrus.Infof("[DATA PRELOAD] have %s to follow %s", user1.UserName, user2.UserName)
 }
 
 func createPost() {
@@ -86,9 +86,19 @@ func main() {
 
 	createUsers(userRepo)
 
-	engine := pkg.NewGinEngine()
-	api.RegisterWebsocketApi(engine, userRepo, chatRepo)
-	api.RegisterRestfulApis(engine, userRepo, postRepo, groupRepo)
+	// // start restful api
+	// engine := pkg.NewGinEngine()
+	// api.RegisterWebsocketApi(engine, userRepo, chatRepo)
+	// api.RegisterRestfulApis(engine, userRepo, postRepo, groupRepo)
+	// engine.Run(":11000")
 
-	engine.Run(":11000")
+	// start DiscordBot
+	dcRedis := pkg.NewDiscordBotUserSessionRedisClient() // violate CA, fix in the future
+	dcBot, err := discord.NewDiscordBot(userRepo, postRepo, groupRepo, dcRedis)
+	if err != nil {
+		logrus.Error("failed to create discord bot")
+		return
+	}
+	dcBot.RegisterDiscordBotCommandHandler()
+	dcBot.Start()
 }

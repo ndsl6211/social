@@ -35,6 +35,7 @@ func (uc *RegisterUseCase) Execute() {
 		uc.req.email,
 		false,
 	)
+	fmt.Println(user)
 
 	if err := uc.userRepo.Save(user); err != nil {
 		errMsg := fmt.Sprintf("user %s already exist", uc.req.username)

@@ -93,7 +93,7 @@ func (ur *userRepo) Save(user *entity.User) error {
 
 	// save user
 	userDataMapper := user_data_mapper.NewUserDataMapper(user)
-	ur.db.Transaction(func(tx *gorm.DB) error {
+	if err := ur.db.Transaction(func(tx *gorm.DB) error {
 		if err := ur.db.Save(userDataMapper).Error; err != nil {
 			return err
 		}
@@ -105,7 +105,9 @@ func (ur *userRepo) Save(user *entity.User) error {
 		}
 
 		return nil
-	})
+	}); err != nil {
+		return err
+	}
 
 	return nil
 }
