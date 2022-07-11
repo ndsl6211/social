@@ -2,6 +2,7 @@ package discord
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
@@ -11,8 +12,7 @@ import (
 )
 
 func (h *botMessageHandler) HandleReply(s *discordgo.Session, e *discordgo.MessageCreate) {
-	userName := e.Author.Username
-	userNum := e.Author.Discriminator
+	dcUserId := fmt.Sprintf("%s%s", e.Author.Username, e.Author.Discriminator)
 	channelId := e.Message.ChannelID
 
 	// try to find channel id based on user id
@@ -21,7 +21,7 @@ func (h *botMessageHandler) HandleReply(s *discordgo.Session, e *discordgo.Messa
 	keys, cursor, err := h.dcRedis.Scan(
 		ctx,
 		cursor,
-		h.getRedisCmdSessKeyForSearch(userName, userNum, channelId),
+		h.getRedisCmdSessKeyForSearch(dcUserId, channelId),
 		0,
 	).Result()
 	if err != nil {
@@ -31,14 +31,14 @@ func (h *botMessageHandler) HandleReply(s *discordgo.Session, e *discordgo.Messa
 
 	// no active session
 	if len(keys) == 0 {
-		logger.Infof("there is no active session for user %s%s", userName, userNum)
+		logger.Infof("there is no active session for dc user %s", dcUserId)
 		return
 	}
 
-	key := keys[0]
-	keyArr := strings.Split(key, ":")
+	activeSessKey := keys[0]
+	keyArr := strings.Split(activeSessKey, ":")
 	cmd := keyArr[len(keyArr)-1]
-	info, err := h.dcRedis.HGetAll(ctx, key).Result()
+	prevReplyData, err := h.dcRedis.HGetAll(ctx, activeSessKey).Result()
 	if err != nil {
 		logrus.Error(err)
 		return
@@ -46,7 +46,7 @@ func (h *botMessageHandler) HandleReply(s *discordgo.Session, e *discordgo.Messa
 
 	replyHandlerFunc, ok := h.replyHandlerMap[cmd]
 	if ok {
-		replyHandlerFunc(key, cmd, channelId, info, e.Content, s)
+		replyHandlerFunc(activeSessKey, channelId, dcUserId, prevReplyData, e.Content, s)
 	} else {
 		logrus.Errorf("unknown command reply: %s", cmd)
 		return
@@ -54,9 +54,9 @@ func (h *botMessageHandler) HandleReply(s *discordgo.Session, e *discordgo.Messa
 }
 
 func (h *botMessageHandler) handleRegisterReply(
-	key string,
-	cmd string,
+	activeSessKey string,
 	channelId string,
+	dcUserId string,
 	data map[string]string,
 	reply string,
 	s *discordgo.Session,
@@ -67,7 +67,7 @@ func (h *botMessageHandler) handleRegisterReply(
 	stageMessages := []string{"", "請輸入使用者名稱", "請輸入email"}
 
 	// save reply
-	if _, err := h.dcRedis.HSet(ctx, key, map[string]string{stageKeys[stage-1]: reply}).Result(); err != nil {
+	if _, err := h.dcRedis.HSet(ctx, activeSessKey, map[string]string{stageKeys[stage-1]: reply}).Result(); err != nil {
 		logrus.Error(err)
 		return
 	}
@@ -77,20 +77,20 @@ func (h *botMessageHandler) handleRegisterReply(
 		s.ChannelMessageSend(channelId, stageMessages[stage])
 
 		// save placeholder for next inquiry
-		if _, err := h.dcRedis.HSet(ctx, key, map[string]string{stageKeys[stage]: ""}).Result(); err != nil {
+		if _, err := h.dcRedis.HSet(ctx, activeSessKey, map[string]string{stageKeys[stage]: ""}).Result(); err != nil {
 			logrus.Error(err)
 			return
 		}
 		return
 	}
 
-	completeData, err := h.dcRedis.HGetAll(ctx, key).Result()
+	completeData, err := h.dcRedis.HGetAll(ctx, activeSessKey).Result()
 	if err != nil {
 		logrus.Error(err)
 		return
 	}
 
-	if _, err := h.dcRedis.Del(ctx, key).Result(); err != nil {
+	if _, err := h.dcRedis.Del(ctx, activeSessKey).Result(); err != nil {
 		logrus.Error("failed to remove session from redis: ", err)
 		return
 	}
@@ -117,9 +117,9 @@ func (h *botMessageHandler) handleRegisterReply(
 }
 
 func (h *botMessageHandler) handleLoginReply(
-	key string,
-	cmd string,
+	activeSessKey string,
 	channelId string,
+	dcUserId string,
 	data map[string]string,
 	reply string,
 	s *discordgo.Session,
@@ -130,7 +130,7 @@ func (h *botMessageHandler) handleLoginReply(
 	stageMessages := []string{""}
 
 	// save reply
-	if _, err := h.dcRedis.HSet(ctx, key, map[string]string{stageKeys[stage-1]: reply}).Result(); err != nil {
+	if _, err := h.dcRedis.HSet(ctx, activeSessKey, map[string]string{stageKeys[stage-1]: reply}).Result(); err != nil {
 		logrus.Error(err)
 		return
 	}
@@ -140,20 +140,20 @@ func (h *botMessageHandler) handleLoginReply(
 		s.ChannelMessageSend(channelId, stageMessages[stage])
 
 		// save placeholder for next inquiry
-		if _, err := h.dcRedis.HSet(ctx, key, map[string]string{stageKeys[stage]: ""}).Result(); err != nil {
+		if _, err := h.dcRedis.HSet(ctx, activeSessKey, map[string]string{stageKeys[stage]: ""}).Result(); err != nil {
 			logrus.Error(err)
 			return
 		}
 		return
 	}
 
-	completeData, err := h.dcRedis.HGetAll(ctx, key).Result()
+	completeData, err := h.dcRedis.HGetAll(ctx, activeSessKey).Result()
 	if err != nil {
 		logrus.Error(err)
 		return
 	}
 
-	if _, err := h.dcRedis.Del(ctx, key).Result(); err != nil {
+	if _, err := h.dcRedis.Del(ctx, activeSessKey).Result(); err != nil {
 		logrus.Error("failed to remove session from redis: ", err)
 		return
 	}
@@ -164,12 +164,16 @@ func (h *botMessageHandler) handleLoginReply(
 	uc.Execute()
 
 	if res.Err != nil {
-		logrus.Error("failed to run register usecase: ", res.Err)
+		logrus.Error("failed to run login usecase: ", res.Err)
 		s.ChannelMessageSend(channelId, "登入失敗, 好像有哪裡出錯ㄌ")
+		s.ChannelEditComplex(channelId, &discordgo.ChannelEdit{
+			Archived: true,
+			Locked:   true,
+		})
 		return
 	}
 
-	splitKey := strings.Split(key, ":")
+	splitKey := strings.Split(activeSessKey, ":")
 	if _, err := h.dcRedis.Set(
 		ctx,
 		h.getRedisLoginSessKey(splitKey[2]),
@@ -178,6 +182,10 @@ func (h *botMessageHandler) handleLoginReply(
 	).Result(); err != nil {
 		logrus.Error("failed to save login status: ", err)
 		s.ChannelMessageSend(channelId, "登入失敗, 好像有哪裡出錯ㄌ")
+		s.ChannelEditComplex(channelId, &discordgo.ChannelEdit{
+			Archived: true,
+			Locked:   true,
+		})
 		return
 	}
 
@@ -186,4 +194,52 @@ func (h *botMessageHandler) handleLoginReply(
 		Archived: true,
 		Locked:   true,
 	})
+}
+
+func (h *botMessageHandler) handleFollowUserReply(
+	activeSessKey string,
+	channelId string,
+	dcUserId string,
+	data map[string]string,
+	reply string,
+	s *discordgo.Session,
+) {
+	// stage := len(data)
+	// ctx := context.Background()
+	// stageKeys := []string{"followeeId"}
+	// stageMessages := []string{""}
+
+	// // save reply
+	// if _, err := h.dcRedis.HSet(ctx, activeSessKey, map[string]string{stageKeys[stage-1]: reply}).Result(); err != nil {
+	// 	logrus.Error(err)
+	// 	return
+	// }
+
+	// if stage < len(stageKeys) {
+	// 	// send next inquiry
+	// 	s.ChannelMessageSend(channelId, stageMessages[stage])
+
+	// 	// save placeholder for next inquiry
+	// 	if _, err := h.dcRedis.HSet(ctx, activeSessKey, map[string]string{stageKeys[stage]: ""}).Result(); err != nil {
+	// 		logrus.Error(err)
+	// 		return
+	// 	}
+	// 	return
+	// }
+
+	// completeData, err := h.dcRedis.HGetAll(ctx, activeSessKey).Result()
+	// if err != nil {
+	// 	logrus.Error(err)
+	// 	return
+	// }
+
+	// if _, err := h.dcRedis.Del(ctx, activeSessKey).Result(); err != nil {
+	// 	logrus.Error("failed to remove session from redis: ", err)
+	// 	return
+	// }
+
+	// if err != nil {
+
+	// }
+	// res := follow_user.NewFollowUserUseCaseReq()
 }

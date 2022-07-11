@@ -93,7 +93,7 @@ func main() {
 	// engine.Run(":11000")
 
 	// start DiscordBot
-	dcRedis := pkg.NewDiscordBotUserSessionRedisClient() // violate CA, fix in the future
+	dcRedis := pkg.NewDiscordBotUserSessionRedisClient() // violate CA, fix in the
 	dcBot, err := discord.NewDiscordBot(userRepo, postRepo, groupRepo, dcRedis)
 	if err != nil {
 		logrus.Error("failed to create discord bot")
