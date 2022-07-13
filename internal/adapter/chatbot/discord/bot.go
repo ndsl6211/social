@@ -58,9 +58,11 @@ func (b *DiscordBot) RegisterDiscordBotCommandHandler() {
 	b.handler.cmdHandlerMap["register"] = b.handler.register
 	b.handler.cmdHandlerMap["login"] = b.handler.login
 	b.handler.cmdHandlerMap["logout"] = b.handler.logout
+	b.handler.cmdHandlerMap["createPost"] = b.handler.createPost
 
 	b.handler.replyHandlerMap["register"] = b.handler.handleRegisterReply
 	b.handler.replyHandlerMap["login"] = b.handler.handleLoginReply
+	b.handler.replyHandlerMap["createPost"] = b.handler.handleCreatePostReply
 }
 
 func (b *DiscordBot) Start() {

@@ -2,12 +2,12 @@ package discord
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/go-redis/redis/v8"
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"mashu.example/internal/usecase/repository"
 )
@@ -90,7 +90,7 @@ func (h *botMessageHandler) register(cmd string, params []string, channelId stri
 func (h *botMessageHandler) login(cmd string, params []string, channelId string, dcUserId string, s *discordgo.Session, e *discordgo.MessageCreate) {
 	ctx := context.Background()
 
-	if _, isLogin := h.checkIsLogin(dcUserId, channelId, s, false); isLogin {
+	if _, _, isLogin := h.checkIsLogin(dcUserId, channelId, s, false); isLogin {
 		s.ChannelMessageSend(channelId, "哥, 你已經登入ㄌ")
 		s.ChannelEditComplex(channelId, &discordgo.ChannelEdit{
 			Archived: true,
@@ -115,7 +115,7 @@ func (h *botMessageHandler) login(cmd string, params []string, channelId string,
 }
 
 func (h *botMessageHandler) logout(cmd string, params []string, channelId string, dcUserId string, s *discordgo.Session, e *discordgo.MessageCreate) {
-	if _, isLogin := h.checkIsLogin(dcUserId, channelId, s, true); !isLogin {
+	if _, _, isLogin := h.checkIsLogin(dcUserId, channelId, s, true); !isLogin {
 		return
 	}
 
@@ -133,6 +133,24 @@ func (h *botMessageHandler) logout(cmd string, params []string, channelId string
 		Archived: true,
 		Locked:   true,
 	})
+}
+
+func (h *botMessageHandler) createPost(cmd string, params []string, channelId string, dcUserId string, s *discordgo.Session, e *discordgo.MessageCreate) {
+	ctx := context.Background()
+
+	if _, err := h.dcRedis.HSet(
+		ctx,
+		h.getRedisCmdSessKey(dcUserId, channelId, cmd),
+		map[string]interface{}{"title": ""},
+	).Result(); err != nil {
+		logrus.Error("failed to set command session:", err)
+		return
+	}
+
+	if _, err := s.ChannelMessageSend(channelId, "請輸入貼文的標題"); err != nil {
+		logrus.Error("failed to send reply message:", err)
+		return
+	}
 }
 
 func (h *botMessageHandler) followUser(cmd string, params []string, channelId string, dcUserId string, s *discordgo.Session, e *discordgo.MessageCreate) {
@@ -168,26 +186,26 @@ func (h *botMessageHandler) getRedisLoginSessKey(dcUserId string) string {
 	return fmt.Sprintf("sess:discord:login:%s", dcUserId)
 }
 
-func (h *botMessageHandler) checkIsLogin(dcUserId string, channelId string, s *discordgo.Session, sendReply bool) (string, bool) {
-	userId, err := h.dcRedis.Get(
+func (h *botMessageHandler) checkIsLogin(dcUserId string, channelId string, s *discordgo.Session, sendReply bool) (uuid.UUID, string, bool) {
+	userData, err := h.dcRedis.HGetAll(
 		context.Background(),
 		h.getRedisLoginSessKey(dcUserId),
 	).Result()
 	if err != nil {
-		if errors.Is(err, redis.Nil) {
-			logger.Info("the user is not logged in")
-			if sendReply {
-				s.ChannelMessageSend(channelId, "哥, 你還沒登入")
-			}
-		} else {
-			s.ChannelMessageSend(channelId, "好像有哪裡出錯了")
-		}
+		s.ChannelMessageSend(channelId, "好像有哪裡出錯了")
 		s.ChannelEditComplex(channelId, &discordgo.ChannelEdit{
 			Archived: true,
 			Locked:   true,
 		})
-		return "", false
+		return uuid.Nil, "", false
+	}
+	if len(userData) == 0 {
+		logger.Info("the user is not logged in")
+		if sendReply {
+			s.ChannelMessageSend(channelId, "哥, 你還沒登入")
+		}
+		return uuid.Nil, "", false
 	}
 
-	return userId, true
+	return uuid.MustParse(userData["userId"]), userData["username"], true
 }

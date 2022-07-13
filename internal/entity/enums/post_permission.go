@@ -1,9 +1,9 @@
 package entity_enums
 
-type PostPermission string
+type PostPermission int
 
 const (
-	POST_PUBLIC        PostPermission = "PUBLIC"
-	POST_FOLLOWER_ONLY PostPermission = "FOLLOWER_ONLY"
-	POST_PRIVATE       PostPermission = "PRIVATE"
+	POST_PUBLIC        PostPermission = iota
+	POST_FOLLOWER_ONLY PostPermission = iota
+	POST_PRIVATE       PostPermission = iota
 )

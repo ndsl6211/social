@@ -3,10 +3,14 @@ package discord
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
+	entity_enums "mashu.example/internal/entity/enums"
+	"mashu.example/internal/usecase/post/create_post"
 	"mashu.example/internal/usecase/user/login"
 	"mashu.example/internal/usecase/user/register"
 )
@@ -173,12 +177,12 @@ func (h *botMessageHandler) handleLoginReply(
 		return
 	}
 
-	splitKey := strings.Split(activeSessKey, ":")
-	if _, err := h.dcRedis.Set(
+	user, _ := h.userRepo.GetUserByUserName(completeData["username"])
+
+	if _, err := h.dcRedis.HSet(
 		ctx,
-		h.getRedisLoginSessKey(splitKey[2]),
-		reply,
-		0,
+		h.getRedisLoginSessKey(dcUserId),
+		map[string]interface{}{"userId": user.ID.String(), "username": completeData["username"]},
 	).Result(); err != nil {
 		logrus.Error("failed to save login status: ", err)
 		s.ChannelMessageSend(channelId, "登入失敗, 好像有哪裡出錯ㄌ")
@@ -190,6 +194,91 @@ func (h *botMessageHandler) handleLoginReply(
 	}
 
 	s.ChannelMessageSend(channelId, "登入成功")
+	s.ChannelEditComplex(channelId, &discordgo.ChannelEdit{
+		Archived: true,
+		Locked:   true,
+	})
+}
+
+func (h *botMessageHandler) handleCreatePostReply(
+	activeSessKey string,
+	channelId string,
+	dcUserId string,
+	data map[string]string,
+	reply string,
+	s *discordgo.Session,
+) {
+	userId, _, ok := h.checkIsLogin(dcUserId, channelId, s, true)
+	if !ok {
+		return
+	}
+
+	stage := len(data)
+	ctx := context.Background()
+	stageKeys := []string{"title", "content", "permission"}
+	stageMessages := []string{"", "請輸入貼文內容", "請輸入該貼文的權限(0=公開, 1=僅限追蹤者, 2=私人)"}
+
+	// save reply
+	if _, err := h.dcRedis.HSet(ctx, activeSessKey, map[string]string{stageKeys[stage-1]: reply}).Result(); err != nil {
+		logrus.Error(err)
+		return
+	}
+
+	if stage < len(stageKeys) {
+		// send next inquiry
+		s.ChannelMessageSend(channelId, stageMessages[stage])
+
+		// save placeholder for next inquiry
+		if _, err := h.dcRedis.HSet(ctx, activeSessKey, map[string]string{stageKeys[stage]: ""}).Result(); err != nil {
+			logrus.Error(err)
+			return
+		}
+		return
+	}
+
+	completeData, err := h.dcRedis.HGetAll(ctx, activeSessKey).Result()
+	if err != nil {
+		logrus.Error(err)
+		return
+	}
+
+	if _, err := h.dcRedis.Del(ctx, activeSessKey).Result(); err != nil {
+		logrus.Error("failed to remove session from redis: ", err)
+		return
+	}
+
+	permission, err := strconv.Atoi(completeData["permission"])
+	if err != nil {
+		logrus.Error("invalid permission:", permission)
+		s.ChannelMessageSend(channelId, "無效的選擇")
+		return
+	}
+	req := create_post.NewCreatePostUseCaseReq(
+		completeData["title"],
+		completeData["content"],
+		userId,
+		uuid.Nil,
+		entity_enums.PostPermission(permission),
+	)
+	res := create_post.NewCreatePostUseCaseRes()
+	uc := create_post.NewCreatePostUseCase(h.userRepo, h.postRepo, h.groupRepo, req, res)
+	uc.Execute()
+
+	if res.Err != nil {
+		logrus.Error("failed to run create post usecase: ", res.Err)
+		s.ChannelMessageSend(channelId, "創建貼文失敗, 好像有哪裡出錯ㄌ")
+		s.ChannelEditComplex(channelId, &discordgo.ChannelEdit{
+			Archived: true,
+			Locked:   true,
+		})
+		return
+	}
+
+	s.ChannelMessageSend(channelId, "這是你的貼文")
+	s.ChannelMessageSendEmbed(channelId, &discordgo.MessageEmbed{
+		Title:       completeData["title"],
+		Description: completeData["content"],
+	})
 	s.ChannelEditComplex(channelId, &discordgo.ChannelEdit{
 		Archived: true,
 		Locked:   true,
