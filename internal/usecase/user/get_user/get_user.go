@@ -11,11 +11,10 @@ type GetUserUseCaseReq struct {
 }
 
 type GetUserUseCaseRes struct {
-	ID          uuid.UUID
-	UserName    string
-	DisplayName string
-	Email       string
-	Public      bool
+	ID       uuid.UUID
+	UserName string
+	Email    string
+	Public   bool
 
 	Err error
 }
@@ -36,7 +35,6 @@ func (uc *GetUserUseCase) Execute() {
 
 	uc.Res.ID = user.ID
 	uc.Res.UserName = user.UserName
-	uc.Res.DisplayName = user.DisplayName
 	uc.Res.Email = user.Email
 	uc.Res.Public = user.Public
 	uc.Res.Err = nil

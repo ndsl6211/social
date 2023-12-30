@@ -6,7 +6,7 @@ import (
 	"syscall"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/go-redis/redis/v8"
+	"github.com/redis/go-redis/v9"
 
 	"mashu.example/config"
 	"mashu.example/internal/usecase/repository"
@@ -19,7 +19,7 @@ var (
 )
 
 type DiscordBot struct {
-	handler botMessageHandler
+	handler discordCommandHandler
 	botSess *discordgo.Session
 }
 
@@ -37,32 +37,28 @@ func NewDiscordBot(
 	}
 
 	discordBot := &DiscordBot{
-		handler: botMessageHandler{
-			userRepo:        userRepo,
-			postRepo:        postRepo,
-			groupRepo:       groupRepo,
-			dcRedis:         dcRedis,
-			botSess:         botSess,
-			cmdHandlerMap:   map[string]commandHandler{},
-			replyHandlerMap: map[string]replyHandler{},
+		handler: discordCommandHandler{
+			userRepo:      userRepo,
+			postRepo:      postRepo,
+			groupRepo:     groupRepo,
+			dcRedis:       dcRedis,
+			botSess:       botSess,
+			cmdHandlerMap: map[string]commandHandler{},
 		},
 		botSess: botSess,
 	}
 
 	botSess.AddHandler(discordBot.messageHandler)
+	botSess.AddHandler(discordBot.InteractionCreateHandler)
 
 	return discordBot, nil
 }
 
-func (b *DiscordBot) RegisterDiscordBotCommandHandler() {
+func (b *DiscordBot) registerDiscordBotCommandHandler() {
 	b.handler.cmdHandlerMap["register"] = b.handler.register
 	b.handler.cmdHandlerMap["login"] = b.handler.login
 	b.handler.cmdHandlerMap["logout"] = b.handler.logout
 	b.handler.cmdHandlerMap["createPost"] = b.handler.createPost
-
-	b.handler.replyHandlerMap["register"] = b.handler.handleRegisterReply
-	b.handler.replyHandlerMap["login"] = b.handler.handleLoginReply
-	b.handler.replyHandlerMap["createPost"] = b.handler.handleCreatePostReply
 }
 
 func (b *DiscordBot) Start() {
@@ -96,10 +92,21 @@ func (b *DiscordBot) messageHandler(s *discordgo.Session, e *discordgo.MessageCr
 	if len(e.Content) == 0 {
 		return
 	}
+}
 
-	if string(e.Content[0]) != cmdPrefix {
-		b.handler.HandleReply(s, e)
-	} else {
-		b.handler.HandleCommand(s, e)
+func (b *DiscordBot) InteractionCreateHandler(
+	s *discordgo.Session,
+	i *discordgo.InteractionCreate,
+) {
+	if h, ok := b.handler.cmdHandlerMap[i.ApplicationCommandData().Name]; ok {
+		optionMap := make(
+			map[string]*discordgo.ApplicationCommandInteractionDataOption,
+			len(i.ApplicationCommandData().Options),
+		)
+		for _, opt := range i.ApplicationCommandData().Options {
+			optionMap[opt.Name] = opt
+		}
+
+		h(s, i, optionMap)
 	}
 }

@@ -1,7 +1,7 @@
 package repository
 
 import (
-	"github.com/go-redis/redis/v8"
+	"github.com/redis/go-redis/v9"
 	"github.com/google/uuid"
 	chat "mashu.example/internal/entity/chat"
 	"mashu.example/internal/usecase/repository"

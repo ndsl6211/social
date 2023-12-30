@@ -7,7 +7,7 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
-	"mashu.example/internal/entity"
+	"mashu.example/internal/model"
 	"mashu.example/internal/usecase/repository/mock"
 	"mashu.example/internal/usecase/user/register"
 )
@@ -22,12 +22,12 @@ func setup(t *testing.T) *mock.MockUserRepo {
 func TestRegisterNewUser(t *testing.T) {
 	userRepo := setup(t)
 
-	var user *entity.User
-	userRepo.EXPECT().Save(gomock.AssignableToTypeOf(&entity.User{})).Do(
-		func(arg *entity.User) { user = arg },
+	var user *model.User
+	userRepo.EXPECT().Save(gomock.AssignableToTypeOf(&model.User{})).Do(
+		func(arg *model.User) { user = arg },
 	)
 
-	req := register.NewRegisterUseCaseReq("userA", "User A", "userA@email.com")
+	req := register.NewRegisterUseCaseReq("userA", "userA@email.com")
 	res := register.NewRegisterUseCaseRes()
 	uc := register.NewRegisterUseCase(userRepo, req, res)
 
@@ -35,7 +35,6 @@ func TestRegisterNewUser(t *testing.T) {
 
 	assert.Nil(t, res.Err)
 	assert.Equal(t, "userA", user.UserName)
-	assert.Equal(t, "User A", user.DisplayName)
 	assert.Equal(t, "userA@email.com", user.Email)
 }
 
@@ -44,10 +43,10 @@ func TestRegisterDuplicateUser(t *testing.T) {
 
 	userRepo.
 		EXPECT().
-		Save(gomock.AssignableToTypeOf(&entity.User{})).
+		Save(gomock.AssignableToTypeOf(&model.User{})).
 		Return(errors.New(""))
 
-	req := register.NewRegisterUseCaseReq("userA", "User A", "userA@email.com")
+	req := register.NewRegisterUseCaseReq("userA", "userA@email.com")
 	res := register.NewRegisterUseCaseRes()
 	uc := register.NewRegisterUseCase(userRepo, req, res)
 

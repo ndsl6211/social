@@ -5,7 +5,7 @@ import (
 
 	"github.com/google/uuid"
 	"golang.org/x/exp/slices"
-	"mashu.example/internal/entity"
+	"mashu.example/internal/model"
 	"mashu.example/internal/usecase"
 	"mashu.example/internal/usecase/repository"
 )
@@ -29,60 +29,60 @@ type HandleFollowRequestUseCaseRes struct {
 
 type HandleFollowRequestUseCase struct {
 	userRepo repository.UserRepo
-	Req      *HandleFollowRequestUseCaseReq
-	Res      *HandleFollowRequestUseCaseRes
+	req      *HandleFollowRequestUseCaseReq
+	res      *HandleFollowRequestUseCaseRes
 }
 
 func (uc *HandleFollowRequestUseCase) Execute() {
-	user, err := uc.userRepo.GetUserById(uc.Req.userId)
+	user, err := uc.userRepo.GetUserById(uc.req.userId)
 	if err != nil {
-		uc.Res.Err = err
+		uc.res.Err = err
 		return
 	}
-	follower, err := uc.userRepo.GetUserById(uc.Req.followerId)
+	follower, err := uc.userRepo.GetUserById(uc.req.followerId)
 	if err != nil {
-		uc.Res.Err = err
+		uc.res.Err = err
 		return
 	}
 
 	var targetFollowReqIdx int
-	var targetFollowReq *entity.FollowRequest = nil
+	var targetFollowReq *model.FollowRequest = nil
 	for idx, followReq := range user.FollowRequests {
-		if followReq.From == uc.Req.followerId && followReq.To == uc.Req.userId {
+		if followReq.From == uc.req.followerId && followReq.To == uc.req.userId {
 			targetFollowReq = followReq
 			targetFollowReqIdx = idx
 			break
 		}
 	}
 	if targetFollowReq == nil {
-		uc.Res.Err = errors.New("follow request not found in followee")
+		uc.res.Err = errors.New("follow request not found in followee")
 		return
 	}
 	user.FollowRequests = slices.Delete(user.FollowRequests, targetFollowReqIdx, targetFollowReqIdx+1)
 
 	targetFollowReq = nil
 	for idx, followReq := range follower.FollowRequests {
-		if followReq.From == uc.Req.followerId && followReq.To == uc.Req.userId {
+		if followReq.From == uc.req.followerId && followReq.To == uc.req.userId {
 			targetFollowReq = followReq
 			targetFollowReqIdx = idx
 			break
 		}
 	}
 	if targetFollowReq == nil {
-		uc.Res.Err = errors.New("follow request not found in follower")
+		uc.res.Err = errors.New("follow request not found in follower")
 		return
 	}
 	follower.FollowRequests = slices.Delete(follower.FollowRequests, targetFollowReqIdx, targetFollowReqIdx+1)
 
-	if uc.Req.action == ACCEPT_FOLLOW_REQUEST {
-		user.AddFollower(uc.Req.followerId)
-		follower.AddFollowing(uc.Req.userId)
+	if uc.req.action == ACCEPT_FOLLOW_REQUEST {
+		user.AddFollower(uc.req.followerId)
+		follower.AddFollowing(uc.req.userId)
 	}
 
 	uc.userRepo.Save(user)
 	uc.userRepo.Save(follower)
 
-	uc.Res.Err = nil
+	uc.res.Err = nil
 }
 
 func NewHandleFollowRequestUseCase(

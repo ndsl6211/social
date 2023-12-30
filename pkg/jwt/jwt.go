@@ -6,6 +6,7 @@ import (
 
 	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 )
 
 type JWTClient interface {
@@ -33,6 +34,7 @@ func (jc *jwtClient) CreateToken(userId uuid.UUID) (string, error) {
 
 	tokenString, err := token.SignedString([]byte(jc.tokenSecret))
 	if err != nil {
+		logrus.Error("failed to sign JWT token")
 		return "", err
 	}
 

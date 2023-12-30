@@ -18,11 +18,11 @@ var (
 )
 
 type CreatePostUseCaseReq struct {
-	title      string
-	content    string
-	ownerId    uuid.UUID
-	groupId    uuid.UUID
-	permission entity_enums.PostPermission
+	Title      string
+	Content    string
+	OwnerId    uuid.UUID
+	GroupId    uuid.UUID
+	Permission entity_enums.PostPermission
 }
 
 type CreatePostUseCaseRes struct {

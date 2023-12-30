@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"mashu.example/internal/entity"
+	"mashu.example/internal/model"
 )
 
 type ErrUserNotFound struct {
@@ -21,7 +21,8 @@ func NewErrUserNotFound(userId uuid.UUID) *ErrUserNotFound {
 
 //go:generate mockgen -destination=./mock/user_mock.go -package=mock . UserRepo
 type UserRepo interface {
-	GetUserById(userId uuid.UUID) (*entity.User, error)
-	GetUserByUserName(username string) (*entity.User, error)
-	Save(user *entity.User) error
+	GetUserById(userId uuid.UUID) (*model.User, error)
+	GetUserByUserName(userName string) (*model.User, error)
+	GetUserByDiscordUserId(discordUserId string) (*model.User, error)
+	Save(user *model.User) error
 }

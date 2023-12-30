@@ -2,19 +2,15 @@ package register
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/sirupsen/logrus"
-	"mashu.example/internal/entity"
-	"mashu.example/internal/usecase"
+	"mashu.example/internal/model"
 	"mashu.example/internal/usecase/repository"
 )
 
 type RegisterUseCaseReq struct {
-	username    string
-	displayName string
-	email       string
+	username string
+	email    string
 }
 
 type RegisterUseCaseRes struct {
@@ -28,19 +24,21 @@ type RegisterUseCase struct {
 }
 
 func (uc *RegisterUseCase) Execute() {
-	user := entity.NewUser(
+	if _, err := uc.userRepo.GetUserByUserName(uc.req.username); err == nil {
+		err = errors.New("user already exist")
+		uc.res.Err = err
+		return
+	}
+
+	user := model.NewUser(
 		uuid.New(),
 		uc.req.username,
-		uc.req.displayName,
 		uc.req.email,
 		false,
 	)
-	fmt.Println(user)
 
 	if err := uc.userRepo.Save(user); err != nil {
-		errMsg := fmt.Sprintf("user %s already exist", uc.req.username)
-		logrus.Info(errMsg)
-		uc.res.Err = errors.New(errMsg)
+		uc.res.Err = err
 		return
 	}
 }
@@ -49,16 +47,15 @@ func NewRegisterUseCase(
 	userRepo repository.UserRepo,
 	req *RegisterUseCaseReq,
 	res *RegisterUseCaseRes,
-) usecase.UseCase {
+) *RegisterUseCase {
 	return &RegisterUseCase{userRepo, req, res}
 }
 
 func NewRegisterUseCaseReq(
 	username string,
-	displayName string,
 	email string,
 ) *RegisterUseCaseReq {
-	return &RegisterUseCaseReq{username, displayName, email}
+	return &RegisterUseCaseReq{username, email}
 }
 
 func NewRegisterUseCaseRes() *RegisterUseCaseRes {

@@ -1,14 +1,12 @@
 package login
 
 import (
-	"github.com/sirupsen/logrus"
-	"mashu.example/internal/usecase"
 	"mashu.example/internal/usecase/repository"
 	"mashu.example/pkg/jwt"
 )
 
 type LoginUseCaseReq struct {
-	username string
+	userName string
 }
 
 type LoginUseCaseRes struct {
@@ -23,9 +21,8 @@ type LoginUseCase struct {
 }
 
 func (uc *LoginUseCase) Execute() {
-	user, err := uc.userRepo.GetUserByUserName(uc.req.username)
+	user, err := uc.userRepo.GetUserByUserName(uc.req.userName)
 	if err != nil {
-		logrus.Errorf("user %s doesn't exist", uc.req.username)
 		uc.res.Err = err
 		return
 	}
@@ -33,7 +30,6 @@ func (uc *LoginUseCase) Execute() {
 	jwtClient := jwt.NewJWTClient(*jwt.NewAuthConfig())
 	token, err := jwtClient.CreateToken(user.ID)
 	if err != nil {
-		logrus.Errorf("failed to generate token")
 		uc.res.Err = err
 		return
 	}
@@ -45,12 +41,12 @@ func NewLoginUseCase(
 	userRepo repository.UserRepo,
 	req *LoginUseCaseReq,
 	res *LoginUseCaseRes,
-) usecase.UseCase {
+) *LoginUseCase {
 	return &LoginUseCase{userRepo, req, res}
 }
 
-func NewLoginUseCaseReq(username string) *LoginUseCaseReq {
-	return &LoginUseCaseReq{username}
+func NewLoginUseCaseReq(userName string) *LoginUseCaseReq {
+	return &LoginUseCaseReq{userName}
 }
 
 func NewLoginUseCaseRes() *LoginUseCaseRes {

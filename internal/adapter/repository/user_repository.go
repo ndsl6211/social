@@ -1,13 +1,12 @@
 package repository
 
 import (
-	"errors"
-
-	"mashu.example/internal/adapter/datamapper/user_data_mapper"
+	"mashu.example/internal/adapter/repository/entity"
+	"mashu.example/internal/model"
 
 	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
-	"mashu.example/internal/entity"
 	"mashu.example/internal/usecase/repository"
 )
 
@@ -15,97 +14,120 @@ type userRepo struct {
 	db *gorm.DB
 }
 
-func (ur *userRepo) GetUserById(userId uuid.UUID) (*entity.User, error) {
+func (ur *userRepo) GetUserById(userId uuid.UUID) (*model.User, error) {
 	// get user
-	userData := &user_data_mapper.UserDataMapper{}
+	user := &entity.UserEntity{}
 	if err := ur.db.
 		Where("users.id = ?", userId).
-		First(userData).Error; err != nil {
+		First(user).Error; err != nil {
 		return nil, err
 	}
 
 	// get follow relation
 	if err := ur.db.
-		Joins("JOIN users ON (follows.follower_id = users.id OR follows.user_id = users.id)").
+		Preload("Follows").
 		Where("users.id = ?", userId).
-		First(&userData.Follows).Error; err != nil {
-		if !errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, err
-		}
+		First(user).Error; err != nil {
+		logrus.Errorf("failed to get follow relation by user id %s: %v", userId, err)
+		return nil, err
 	}
-	user := userData.ToUser()
 
-	return user, nil
+	return user.ToUser(), nil
 }
 
-func (ur *userRepo) GetUserByUserName(username string) (*entity.User, error) {
-	userData := &user_data_mapper.UserDataMapper{}
+func (ur *userRepo) GetUserByUserName(userName string) (*model.User, error) {
+	// get user
+	user := &entity.UserEntity{}
 	if err := ur.db.
-		Where("users.name = ?", username).
-		First(userData).Error; err != nil {
+		Where("users.name = ?", userName).
+		First(user).Error; err != nil {
+		logrus.Errorf("failed to get user by user name %s: %v", userName, err)
 		return nil, err
 	}
 
 	// get follow relation
 	if err := ur.db.
-		Joins("JOIN users ON (follows.follower_id = users.id OR follows.user_id = users.id)").
-		Where("users.name = ?", username).
-		First(&userData.Follows).Error; err != nil {
-		if !errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, err
-		}
+		Preload("Follows").
+		Where("users.name = ?", userName).
+		First(user).Error; err != nil {
+		logrus.Errorf("failed to get follow relation by user name %s: %v", userName, err)
+		return nil, err
 	}
-	user := userData.ToUser()
 
-	return user, nil
+	return user.ToUser(), nil
 }
 
-func (ur *userRepo) Save(user *entity.User) error {
+func (ur *userRepo) GetUserByDiscordUserId(discordUserId string) (*model.User, error) {
+	// get user
+	user := &entity.UserEntity{}
+	if err := ur.db.
+		Where("users.discord_user_id = ?", discordUserId).
+		First(user).Error; err != nil {
+		logrus.Errorf("failed to get user by discord user id %s: %v", discordUserId, err)
+		return nil, err
+	}
+
+	// get follow relation
+	if err := ur.db.
+		Preload("Follows").
+		Where("users.discord_user_id = ?", discordUserId).
+		First(user).Error; err != nil {
+		logrus.Errorf("failed to get follow relation by discord user id %s: %v", discordUserId, err)
+		return nil, err
+	}
+
+	return user.ToUser(), nil
+}
+
+func (ur *userRepo) Save(user *model.User) error {
 	// build follow status
-	var followDataMappers []*user_data_mapper.FollowDataMapper
+	var userFollowsEntity []*entity.UserFollowsEntity
 
 	// store follow req and mark status as REQUESTED
 	for _, followReq := range user.FollowRequests {
-		followDataMappers = append(followDataMappers, user_data_mapper.NewFollowDataMapper(
-			followReq.To,
-			followReq.From,
-			user_data_mapper.REQUESTED,
-		))
+		userFollowsEntity = append(userFollowsEntity, &entity.UserFollowsEntity{
+			User:     followReq.From,
+			Follower: followReq.To,
+			Status:   entity.USER_FOLLOWS_REQUESTED,
+		})
 	}
 
 	// store followers and mark status as FOLLOWING
 	for _, follower := range user.Followers {
-		followDataMappers = append(followDataMappers, user_data_mapper.NewFollowDataMapper(
-			user.ID,
-			follower,
-			user_data_mapper.FOLLOWING,
-		))
+		userFollowsEntity = append(userFollowsEntity, &entity.UserFollowsEntity{
+			User:     user.ID,
+			Follower: follower,
+			Status:   entity.USER_FOLLOWS_FOLLOWING,
+		})
 	}
 
 	// store followings and mark status as FOLLOWING
 	for _, following := range user.Followings {
-		followDataMappers = append(followDataMappers, user_data_mapper.NewFollowDataMapper(
+		userFollowsEntity = append(userFollowsEntity, entity.NewUserFollowsEntity(
 			following,
 			user.ID,
-			user_data_mapper.FOLLOWING,
+			entity.USER_FOLLOWS_FOLLOWING,
 		))
 	}
 
 	// save user
-	userDataMapper := user_data_mapper.NewUserDataMapper(user)
+	userEntity := entity.NewUserEntity(user)
 	if err := ur.db.Transaction(func(tx *gorm.DB) error {
-		if err := ur.db.Save(userDataMapper).Error; err != nil {
+		if err := ur.db.Save(userEntity).Error; err != nil {
+			logrus.Error("failed to save UserEntity:", err)
 			return err
 		}
 
-		if len(followDataMappers) != 0 {
-			if err := ur.db.Save(followDataMappers).Error; err != nil {
+		if len(userFollowsEntity) != 0 {
+			if err := ur.db.Save(userFollowsEntity).Error; err != nil {
+				logrus.Error("failed to save UserFollowsEntity:", err)
 				return err
 			}
 		}
 
 		return nil
 	}); err != nil {
+		logrus.Error("failed to execute DB transaction:", err)
 		return err
 	}
 
@@ -113,7 +135,7 @@ func (ur *userRepo) Save(user *entity.User) error {
 }
 
 func NewUserRepository(db *gorm.DB) repository.UserRepo {
-	db.AutoMigrate(&user_data_mapper.UserDataMapper{}, &user_data_mapper.FollowDataMapper{})
+	db.AutoMigrate(&entity.UserEntity{}, &entity.UserFollowsEntity{})
 
 	return &userRepo{db}
 }

@@ -1,4 +1,4 @@
-package entity
+package model
 
 import (
 	"fmt"
@@ -7,17 +7,12 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-type FollowRequest struct {
-	From uuid.UUID
-	To   uuid.UUID
-}
-
 type User struct {
-	ID          uuid.UUID
-	UserName    string
-	DisplayName string
-	Email       string
-	Public      bool
+	ID            uuid.UUID
+	Email         string
+	UserName      string
+	Public        bool
+	DiscordUserId string
 
 	Followers      []uuid.UUID
 	Followings     []uuid.UUID
@@ -52,11 +47,10 @@ func (u *User) AddFollowRequest(req *FollowRequest) {
 	u.FollowRequests = append(u.FollowRequests, req)
 }
 
-func NewUser(id uuid.UUID, userName, displayName, email string, public bool) *User {
+func NewUser(id uuid.UUID, userName, email string, public bool) *User {
 	return &User{
 		ID:             id,
 		UserName:       userName,
-		DisplayName:    displayName,
 		Email:          email,
 		Public:         public,
 		Followers:      []uuid.UUID{},

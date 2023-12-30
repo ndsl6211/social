@@ -1,14 +1,10 @@
 package get_following
 
 import (
-	"errors"
-	"fmt"
-
 	"github.com/google/uuid"
-	"github.com/sirupsen/logrus"
 	"mashu.example/internal/usecase"
+	"mashu.example/internal/usecase/dto"
 	"mashu.example/internal/usecase/repository"
-	"mashu.example/internal/usecase/types"
 )
 
 type GetFollowingUseCaseReq struct {
@@ -16,7 +12,7 @@ type GetFollowingUseCaseReq struct {
 }
 
 type GetFollowingUseCaseRes struct {
-	Users []*types.FollowingInfo
+	Users []*dto.FollowingInfo
 	Err   error
 }
 
@@ -29,27 +25,23 @@ type GetFollowingUseCase struct {
 func (uc *GetFollowingUseCase) Execute() {
 	user, err := uc.userRepo.GetUserById(uc.req.userId)
 	if err != nil {
-		errMsg := fmt.Sprintf("failed to get user (userId: %s)", uc.req.userId)
-		logrus.Errorf(errMsg)
-		uc.res.Err = errors.New(errMsg)
+		uc.res.Err = err
 		return
 	}
 
-	followingInfos := []*types.FollowingInfo{}
+	followingInfos := []*dto.FollowingInfo{}
 	for _, followingId := range user.Followings {
 		followingUser, err := uc.userRepo.GetUserById(followingId)
 		if err != nil {
-			errMsg := fmt.Sprintf("failed to get user's following user (userId: %s)", uc.req.userId)
-			logrus.Errorf(errMsg)
-			uc.res.Err = errors.New(errMsg)
+			uc.res.Err = err
 			return
 		}
-		followingInfos = append(followingInfos, &types.FollowingInfo{
-			ID:          followingUser.ID,
-			UserName:    followingUser.UserName,
-			DisplayName: followingUser.DisplayName,
-			Email:       followingUser.Email,
-			Public:      followingUser.Public,
+
+		followingInfos = append(followingInfos, &dto.FollowingInfo{
+			ID:       followingUser.ID,
+			UserName: followingUser.UserName,
+			Email:    followingUser.Email,
+			Public:   followingUser.Public,
 		})
 	}
 

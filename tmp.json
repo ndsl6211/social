@@ -1,0 +1,16 @@
+{
+  "type": "serviceMessage",
+  "header": {
+    "roomName": "",
+    "messageId": "9091.2000000010000000",
+    "blocked": false,
+    "timestamp": 1703578024524
+  },
+  "body": {
+    "fallbackPolicy": "skip",
+    "data": {
+      "value": "{\"event\":\"STARTED\",\"luckyDrawId\":\"Qy4gd2\",\"type\":\"luckyDrawEvent\"}"
+    },
+    "dataType": "pluginEvent"
+  }
+}
